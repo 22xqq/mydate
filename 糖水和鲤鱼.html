@@ -1,0 +1,3061 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>糖水和鲤鱼 出片助理版</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fffdf8;
+      --panel: #fffffb;
+      --panel-2: #f2f8fb;
+      --line: #d8dedc;
+      --muted: #897d77;
+      --text: #302b28;
+      --soft: #5a514d;
+      --accent: #72bce8;
+      --accent-2: #bd544d;
+      --good: #9fc9b2;
+      --warn: #dcbf7f;
+      --danger: #ad4d47;
+      --shadow: 0 18px 50px rgba(126, 66, 58, .14);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(143, 211, 255, .08), transparent 32%),
+        linear-gradient(225deg, rgba(255, 180, 216, .07), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #24272c;
+      color: var(--text);
+      min-height: 34px;
+      border-radius: 7px;
+      padding: 0 11px;
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+      white-space: nowrap;
+    }
+
+    button:hover { border-color: #59616c; background: #2b2f35; }
+    button:active { transform: translateY(1px); }
+    button.primary { background: #eaf7ff; color: #11161b; border-color: #eaf7ff; }
+    button.ghost { background: transparent; }
+    button.icon { width: 34px; padding: 0; display: inline-grid; place-items: center; }
+    button.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(143, 211, 255, .28); }
+    button.danger:hover { border-color: var(--danger); color: #ffd4d4; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 56px 1fr;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(18, 19, 20, .82);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand strong {
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+    }
+
+    .stage {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 48px 1fr 56px;
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .tool-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .canvas-wrap {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background-color: #17191c;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.04) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.04) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.04) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.04) 75%);
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
+      box-shadow: inset 0 0 80px rgba(0,0,0,.45);
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      box-shadow: var(--shadow);
+      background: #101113;
+      cursor: default;
+    }
+
+    .hint {
+      pointer-events: none;
+      position: absolute;
+      inset: auto 18px 18px auto;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+    }
+
+    .bottom-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .publish-copy {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    aside {
+      min-height: 0;
+      overflow: auto;
+      border-left: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(27, 29, 32, .94);
+      padding: 14px;
+    }
+
+    .panel {
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .035);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: 0;
+      color: var(--soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .grid.two { grid-template-columns: 1fr 1fr; }
+    .grid.three { grid-template-columns: repeat(3, 1fr); }
+
+    .chip {
+      min-height: 34px;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reference-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .reference-card {
+      min-height: auto;
+      height: auto;
+      padding: 7px;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      background: rgba(255, 255, 255, .62);
+      border-color: rgba(146, 65, 58, .18);
+    }
+
+    .reference-card img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 7px;
+      border: 1px solid rgba(79, 137, 181, .22);
+      background: #fffaf5;
+    }
+
+    .reference-card span {
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .font-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .font-strip .chip {
+      flex: 0 0 auto;
+      min-width: 78px;
+    }
+
+    .custom-decor {
+      display: grid;
+      grid-template-columns: 1fr 96px;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .control {
+      display: grid;
+      gap: 5px;
+      margin: 9px 0;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #15171a;
+      color: var(--text);
+      border-radius: 7px;
+      padding: 8px 9px;
+      min-height: 34px;
+    }
+
+    input[type="color"] {
+      width: 100%;
+      height: 34px;
+      border: 1px solid var(--line);
+      background: #15171a;
+      border-radius: 7px;
+      padding: 3px;
+    }
+
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+    }
+
+    .ready-score {
+      display: grid;
+      gap: 8px;
+    }
+
+    .assistant-brief {
+      display: grid;
+      gap: 10px;
+      border: 1px solid rgba(143, 211, 255, .28);
+      background: linear-gradient(135deg, rgba(143,211,255,.12), rgba(255,180,216,.08));
+      border-radius: 8px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .assistant-brief strong {
+      font-size: 15px;
+    }
+
+    .step-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .step-strip span {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 7px;
+      background: rgba(0,0,0,.18);
+      color: var(--soft);
+      font-size: 12px;
+      padding: 5px;
+    }
+
+    details.advanced-panel {
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .025);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    details.advanced-panel > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px;
+      color: var(--soft);
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    details.advanced-panel > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.advanced-panel .panel {
+      border: 0;
+      border-radius: 0;
+      margin: 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: transparent;
+    }
+
+    .meter {
+      height: 9px;
+      background: #111316;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--warn), var(--good), var(--accent));
+      transition: width .22s ease;
+    }
+
+    .score-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-line strong { font-size: 24px; }
+    .small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .layers {
+      display: grid;
+      gap: 7px;
+    }
+
+    .layer {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #171a1e;
+      cursor: pointer;
+    }
+
+    .layer.active { border-color: var(--accent); background: rgba(143, 211, 255, .08); }
+    .layer-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+    .layer-actions { display: flex; gap: 4px; }
+    .layer-actions button { min-height: 24px; width: 24px; padding: 0; font-size: 12px; }
+
+    .recommend-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 8px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      color: var(--soft);
+      background: rgba(255,255,255,.045);
+      font-size: 12px;
+    }
+
+    .plan-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .plan-card {
+      display: grid;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(135deg, rgba(143,211,255,.09), rgba(255,180,216,.055));
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .plan-card strong {
+      font-size: 13px;
+    }
+
+    .plan-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .plan-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .plan-meta span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 23px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      color: var(--soft);
+      font-size: 11px;
+    }
+
+    body {
+      background:
+        linear-gradient(90deg, rgba(189, 84, 77, .18) 0 15%, transparent 15% 100%),
+        linear-gradient(135deg, rgba(114, 188, 232, .54), transparent 30%),
+        linear-gradient(225deg, rgba(189, 84, 77, .36), transparent 28%),
+        linear-gradient(35deg, transparent 0 18%, rgba(114, 188, 232, .24) 18% 30%, transparent 30% 100%),
+        linear-gradient(155deg, transparent 0 60%, rgba(189, 84, 77, .22) 60% 74%, transparent 74% 100%),
+        linear-gradient(180deg, #ffffff 0%, #fffdf8 48%, #f5fbff 100%);
+      color: var(--text);
+    }
+
+    header {
+      border-bottom-color: rgba(119, 98, 82, .14);
+      background: rgba(255, 250, 243, .86);
+      box-shadow: 0 1px 0 rgba(255,255,255,.72);
+    }
+
+    button {
+      background: #fffaf3;
+      color: var(--text);
+      border-color: #d9cfc3;
+      box-shadow: 0 1px 0 rgba(255,255,255,.86);
+    }
+
+    button:hover {
+      border-color: #b7cddd;
+      background: #f3f9fc;
+    }
+
+    button.primary {
+      background: #c9edff;
+      color: #173e55;
+      border-color: #72bce8;
+    }
+
+    button.active {
+      border-color: var(--accent);
+      background: #edf9ff;
+      box-shadow: inset 0 0 0 1px rgba(114, 188, 232, .68), 0 0 0 3px rgba(189, 84, 77, .14);
+    }
+
+    button.danger:hover {
+      border-color: var(--danger);
+      color: #8b4b47;
+      background: #fff2ef;
+    }
+
+    .canvas-wrap {
+      border-color: rgba(119, 98, 82, .14);
+      background-color: #f6f0e7;
+      background-image:
+        linear-gradient(45deg, rgba(157,201,223,.16) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(157,201,223,.16) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(201,135,130,.10) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(201,135,130,.10) 75%);
+      box-shadow: inset 0 0 72px rgba(169, 139, 112, .18);
+    }
+
+    canvas {
+      background: #fffaf3;
+      box-shadow: 0 20px 55px rgba(122, 94, 70, .18);
+    }
+
+    .hint {
+      color: rgba(90, 78, 68, .58);
+    }
+
+    aside {
+      border-left-color: rgba(119, 98, 82, .14);
+      background: rgba(255, 250, 243, .86);
+    }
+
+    .panel,
+    .assistant-brief,
+    details.advanced-panel {
+      border-color: rgba(119, 98, 82, .14);
+      background: rgba(255, 252, 247, .78);
+      box-shadow: 0 10px 30px rgba(122, 94, 70, .08);
+    }
+
+    .assistant-brief {
+      background:
+        linear-gradient(90deg, rgba(189,84,77,.22) 0 9px, transparent 9px 100%),
+        linear-gradient(135deg, rgba(201,237,255,.90), rgba(255,255,255,.80) 44%, rgba(189,84,77,.22)),
+        linear-gradient(25deg, transparent 0 58%, rgba(114,188,232,.32) 58% 70%, transparent 70% 100%);
+    }
+
+    .step-strip span,
+    .badge,
+    .plan-meta span {
+      border-color: rgba(119, 98, 82, .12);
+      background: rgba(255,255,255,.55);
+      color: var(--soft);
+    }
+
+    details.advanced-panel > summary {
+      border-bottom-color: rgba(119, 98, 82, .12);
+      background: rgba(246, 240, 231, .58);
+    }
+
+    details.advanced-panel .panel {
+      border-bottom-color: rgba(119, 98, 82, .1);
+      box-shadow: none;
+    }
+
+    input[type="text"], input[type="number"], textarea, select {
+      background: #fffdf8;
+      color: var(--text);
+      border-color: #d9cfc3;
+    }
+
+    input[type="color"] {
+      background: #fffdf8;
+      border-color: #d9cfc3;
+    }
+
+    .meter {
+      background: #efe5da;
+      border-color: rgba(119, 98, 82, .12);
+    }
+
+    .meter span {
+      background: linear-gradient(90deg, #bd544d, #72bce8, #f0c4c0);
+    }
+
+    .layer {
+      border-color: #ded3c6;
+      background: #fffdf8;
+    }
+
+    .layer.active {
+      border-color: var(--accent);
+      background: rgba(207, 232, 244, .48);
+    }
+
+    .plan-card {
+      border-color: rgba(114, 188, 232, .76);
+      background:
+        linear-gradient(90deg, rgba(189,84,77,.24) 0 6px, transparent 6px 100%),
+        linear-gradient(135deg, rgba(201,237,255,.82), rgba(255,255,255,.92) 48%, rgba(189,84,77,.20)),
+        linear-gradient(25deg, transparent 0 68%, rgba(114,188,232,.28) 68% 82%, transparent 82% 100%);
+      box-shadow: 0 12px 30px rgba(126, 66, 58, .10);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .app { min-height: 100dvh; height: auto; }
+      main { grid-template-columns: 1fr; }
+      aside { border-left: 0; border-top: 1px solid rgba(119, 98, 82, .14); overflow: visible; }
+      .stage { min-height: 620px; }
+      .brand span { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        min-height: 100dvh;
+        overflow-x: hidden;
+      }
+
+      .app {
+        min-height: 100dvh;
+        height: auto;
+        grid-template-rows: auto 1fr;
+      }
+
+      header {
+        min-height: 0;
+        padding: 8px 10px;
+        align-items: flex-start;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .brand {
+        width: 100%;
+        gap: 4px;
+      }
+
+      .brand strong {
+        font-size: 18px;
+      }
+
+      .top-actions {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        gap: 6px;
+        scrollbar-width: none;
+      }
+
+      .top-actions::-webkit-scrollbar,
+      .tool-group::-webkit-scrollbar {
+        display: none;
+      }
+
+      button {
+        min-height: 38px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      button.icon {
+        width: 38px;
+      }
+
+      main {
+        display: block;
+        min-height: auto;
+      }
+
+      .stage {
+        min-height: 0;
+        grid-template-rows: auto auto auto;
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .toolbar {
+        display: grid;
+        gap: 8px;
+      }
+
+      .tool-group {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 6px;
+        padding-bottom: 2px;
+      }
+
+      .tool-label {
+        flex: 0 0 auto;
+      }
+
+      .tool-group button {
+        flex: 0 0 auto;
+      }
+
+      .canvas-wrap {
+        width: 100%;
+        height: min(58dvh, 520px);
+        min-height: 330px;
+        max-height: 520px;
+      }
+
+      canvas {
+        max-width: calc(100vw - 24px);
+        max-height: calc(58dvh - 24px);
+      }
+
+      .hint {
+        left: 12px;
+        right: 12px;
+        bottom: 10px;
+        font-size: 11px;
+      }
+
+      .bottom-bar {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .publish-copy {
+        white-space: normal;
+        line-height: 1.45;
+      }
+
+      aside {
+        padding: 10px;
+        overflow: visible;
+      }
+
+      .assistant-brief,
+      .panel {
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .step-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .grid.two,
+      .grid.three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .chip {
+        min-height: 38px;
+        white-space: normal;
+      }
+
+      .plan-card {
+        gap: 7px;
+        padding: 9px;
+      }
+
+      .plan-card p {
+        font-size: 12px;
+        line-height: 1.38;
+      }
+
+      .plan-meta {
+        gap: 4px;
+      }
+
+      .plan-meta span {
+        min-height: 22px;
+        font-size: 10px;
+      }
+
+      textarea {
+        min-height: 96px;
+      }
+
+      details.advanced-panel > summary {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+      }
+
+      .layer {
+        min-height: 40px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .grid.two,
+      .grid.three {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas-wrap {
+        min-height: 300px;
+        height: min(54dvh, 470px);
+      }
+
+      canvas {
+        max-height: calc(54dvh - 24px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <strong>糖水和鲤鱼</strong>
+        <span>出片助理实验版 · 糖水和鲤鱼</span>
+      </div>
+      <div class="top-actions">
+        <button id="undoBtn" title="撤销">↶</button>
+        <button id="redoBtn" title="重做">↷</button>
+        <button id="compareBtn" class="ghost">对比</button>
+        <button id="exportJpgBtn">导出 JPG</button>
+        <button id="exportPngBtn" class="primary">导出 PNG</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="stage">
+        <div class="toolbar">
+          <div class="tool-group">
+            <span class="tool-label">工具</span>
+            <button class="tool active" data-tool="move" title="移动/选择">移动</button>
+            <button class="tool" data-tool="erase" title="擦除当前装饰层">擦除</button>
+            <button id="addTextBtn">文字</button>
+            <button id="addStickerBtn">贴纸</button>
+            <button id="blindBoxBtn">盲盒爆改</button>
+          </div>
+          <div class="tool-group">
+            <span class="tool-label">画布</span>
+            <button id="fitBtn">适应窗口</button>
+            <button id="resetBtn" class="danger">重置</button>
+          </div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="mainCanvas" width="960" height="720"></canvas>
+          <div class="hint">拖拽文字/贴纸，开启对比后拖动分割线</div>
+        </div>
+
+        <div class="bottom-bar">
+          <div class="publish-copy" id="publishLine">上传一张图片，糖水和鲤鱼会帮你把它变得更适合发布。</div>
+          <button id="copyCaptionBtn">复制发布文案</button>
+        </div>
+      </section>
+
+      <aside>
+        <section class="assistant-brief">
+          <strong>上传图片，直接拿 3 个可发布结果</strong>
+          <div class="small">这一版把工具箱退到后面，优先让糖水和鲤鱼判断图片气质，并给出风格、比例、封面文字、正文、标签和贴纸组合。</div>
+          <div class="step-strip">
+            <span>1 上传图片</span>
+            <span>2 选出片方案</span>
+            <span>3 导出/复制文案</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>图片</h2>
+          <input id="imageInput" type="file" accept="image/*" class="hidden">
+          <div class="grid two">
+            <button id="uploadBtn" class="primary">上传图片</button>
+            <button id="demoBtn">使用参考测试图</button>
+          </div>
+          <div class="small" id="imageMeta">未上传图片</div>
+        </section>
+
+        <section class="panel">
+          <h2>出片方案 <span class="small">3 个结果</span></h2>
+          <div class="plan-list" id="recommendList">
+            <div class="small">上传图片后，糖水和鲤鱼会直接给你 3 个可发布方案。</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>发布文案</h2>
+          <textarea id="captionBox"></textarea>
+          <div class="grid two">
+            <button id="regenCaptionBtn">重新生成</button>
+            <button id="copyCaptionBtn2">复制</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>READY CHECK <span id="readyLabel">0%</span></h2>
+          <div class="ready-score">
+            <div class="score-line"><strong id="readyScore">0</strong><span class="small">出片指数</span></div>
+            <div class="meter"><span id="readyMeter"></span></div>
+            <div class="small" id="readyTip">先上传图片，工作台就醒了。</div>
+          </div>
+        </section>
+
+        <details class="advanced-panel">
+          <summary>高级微调：滤镜、贴纸、图层和边框</summary>
+
+        <section class="panel">
+          <h2>网感模板</h2>
+          <div class="grid two" id="templateButtons"></div>
+        </section>
+
+        <section class="panel">
+          <h2>风格 Preset</h2>
+          <div class="grid two" id="filterButtons"></div>
+          <div class="control">
+            <div class="control-row"><span>风格强度</span><span id="styleStrengthValue">72</span></div>
+            <input id="styleStrength" type="range" min="0" max="100" value="72">
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>基础参数</h2>
+          <div id="adjustmentControls"></div>
+        </section>
+
+        <section class="panel">
+          <h2>发布比例</h2>
+          <div class="grid two" id="ratioButtons"></div>
+        </section>
+
+        <section class="panel">
+          <h2>轻量 PS 图层</h2>
+          <div class="layers" id="layersList"></div>
+        </section>
+
+        <section class="panel" id="layerEditor">
+          <h2>当前图层</h2>
+          <div class="grid">
+            <input id="layerText" type="text" placeholder="文字内容">
+            <select id="fontFamily">
+              <option value="round">圆润标题</option>
+              <option value="hand">手写感</option>
+              <option value="retro">复古粗体</option>
+              <option value="bubble">英文泡泡</option>
+              <option value="clean">清爽细字</option>
+            </select>
+            <div class="grid two">
+              <label class="control">
+                <div class="control-row"><span>字号</span><span id="fontSizeValue">46</span></div>
+                <input id="fontSize" type="range" min="16" max="140" value="46">
+              </label>
+              <label class="control">
+                <div class="control-row"><span>透明度</span><span id="opacityValue">100</span></div>
+                <input id="opacity" type="range" min="5" max="100" value="100">
+              </label>
+            </div>
+            <div class="grid two">
+              <input id="layerColor" type="color" value="#ffffff">
+              <select id="blendMode">
+                <option value="source-over">正常</option>
+                <option value="screen">滤色</option>
+                <option value="multiply">正片叠底</option>
+                <option value="overlay">叠加</option>
+                <option value="soft-light">柔光</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>贴纸库 <span class="small">跟随当前风格</span></h2>
+          <div class="grid three" id="stickerButtons"></div>
+          <div class="custom-decor">
+            <input id="customStickerText" type="text" placeholder="自定义贴纸文字/装饰">
+            <input id="customStickerColor" type="color" value="#78b7e7">
+            <select id="customStickerShape">
+              <option value="label">标签</option>
+              <option value="tape">胶带</option>
+              <option value="heartFrame">心动框</option>
+              <option value="coord">坐标</option>
+              <option value="sparkDots">圆点高光</option>
+            </select>
+            <button id="addCustomStickerBtn">添加自定义</button>
+          </div>
+          <div class="small">单独添加贴纸时，会自动匹配当前滤镜的颜色、透明度和混合模式。</div>
+        </section>
+
+        <section class="panel">
+          <h2>参考图池 <span class="small">可直接载入测试</span></h2>
+          <div class="reference-grid" id="referenceGallery"></div>
+        </section>
+
+        <section class="panel">
+          <h2>边框 / 留白</h2>
+          <div class="control">
+            <div class="control-row"><span>留白</span><span id="paddingValue">24</span></div>
+            <input id="padding" type="range" min="0" max="120" value="24">
+          </div>
+          <div class="control">
+            <div class="control-row"><span>圆角</span><span id="radiusValue">18</span></div>
+            <input id="radius" type="range" min="0" max="80" value="18">
+          </div>
+          <div class="grid two">
+            <input id="frameColor" type="color" value="#f7f0e8">
+            <button id="toggleFrameBtn">切换边框</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>使用洞察</h2>
+          <div class="small" id="insightBox">本次会话还没有操作记录。</div>
+        </section>
+        </details>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrap = document.getElementById('canvasWrap');
+
+    const publishRatios = {
+      xhs: { label: '3:4 小红书', w: 900, h: 1200 },
+      avatar: { label: '1:1 头像', w: 1000, h: 1000 },
+      wallpaper: { label: '9:16 壁纸', w: 900, h: 1600 },
+      wide: { label: '16:9 横图', w: 1280, h: 720 },
+      moments: { label: '4:3 朋友圈', w: 1200, h: 900 }
+    };
+
+    const stickerPresets = [
+      { name: '星星', shape: 'star', color: '#fff4a8' },
+      { name: '胶片日期', shape: 'date', color: '#ffefe0' },
+      { name: '扫描线', shape: 'scan', color: '#ffffff' },
+      { name: '标签', shape: 'label', color: '#101113' },
+      { name: '手写箭头', shape: 'arrow', color: '#ffffff' },
+      { name: '胶带', shape: 'tape', color: '#f4d7a1' },
+      { name: '坐标', shape: 'coord', color: '#e9f7ff' },
+      { name: '心动框', shape: 'heartFrame', color: '#ffb4d8' },
+      { name: '圆点高光', shape: 'sparkDots', color: '#ffffff' }
+    ];
+
+    const referencePresets = [
+      { name: '原参考拼贴', type: 'image', src: 'sugar-koi-reference.jpg' },
+      { name: '红蓝网格贴纸', type: 'generated', kind: 'gridRedBlue' },
+      { name: '浅蓝清爽封面', type: 'generated', kind: 'softBlue' },
+      { name: '粉白清甜便签', type: 'generated', kind: 'pinkWhite' }
+    ];
+
+    const fontPresets = {
+      round: '"Arial Rounded MT Bold", "Microsoft YaHei", Arial, sans-serif',
+      hand: '"Comic Sans MS", "KaiTi", "Microsoft YaHei", cursive',
+      retro: '"Cooper Black", "Microsoft YaHei", Georgia, serif',
+      bubble: '"Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif',
+      clean: '"Microsoft YaHei UI", "PingFang SC", Arial, sans-serif'
+    };
+
+    const state = {
+      image: null,
+      imageName: '',
+      ratio: 'xhs',
+      currentFilter: 'ccd',
+      styleStrength: 72,
+      adjustments: {
+        brightness: 4,
+        contrast: 8,
+        saturation: 10,
+        temperature: 0,
+        grain: 18,
+        vignette: 22
+      },
+      frame: {
+        enabled: true,
+        padding: 24,
+        radius: 18,
+        color: '#f7f0e8'
+      },
+      layers: [],
+      selectedLayerId: null,
+      tool: 'move',
+      compare: false,
+      compareX: .5,
+      caption: '',
+      stats: {
+        actions: 0,
+        exports: 0,
+        favoriteFilter: 'ccd',
+        lastAction: '等待开始',
+        templateUsed: false
+      },
+      imageMood: '未分析',
+      imageFeatures: null
+    };
+
+    let renderQueued = false;
+    let drag = null;
+    let historyPast = [];
+    let historyFuture = [];
+
+    const filterRegistry = {
+      none: { label: '原图', apply: (imageData) => imageData },
+      glitch: { label: '故障风', apply: applyGlitch },
+      badfilm: { label: '废片风', apply: applyBadFilm },
+      ccd: { label: 'CCD风', apply: applyCCD },
+      sony: { label: '索尼风', apply: applySony },
+      sakura: { label: '樱空拼贴', apply: applySakura },
+      campus: { label: '校园磁带', apply: applyCampus },
+      code: { label: '代码梦境', apply: applyCodeDream },
+      neon: { label: '赛博霓虹', apply: applyNeon },
+      hk: { label: '港风夜色', apply: applyHongKong },
+      clean: { label: '冷白清透', apply: applyClean },
+      magazine: { label: '日杂版面', apply: applyMagazine },
+      dream: { label: '梦核柔光', apply: applyDream },
+      xiaotianKoi: { label: '小田吃鲤鱼', apply: applyXiaotianKoi },
+      dailyBright: { label: '日常透亮', apply: applyDailyBright },
+      watermelonEgg: { label: '爱吃茶叶蛋的西瓜', apply: applyWatermelonEgg },
+      koiBlue: { label: '鲤鱼东东煮', apply: applyKoiBlue }
+    };
+
+    const templateRegistry = {
+      sakuraRun: {
+        label: '樱花出逃封面',
+        filter: 'sakura',
+        ratio: 'xhs',
+        strength: 78,
+        adjustments: { brightness: 8, contrast: 4, saturation: 18, temperature: 8, grain: 10, vignette: 8 },
+        frame: { enabled: true, padding: 42, radius: 28, color: '#fff2f7' },
+        text: '今天也要漂亮出逃',
+        stickers: ['星星', '标签']
+      },
+      codeAvatar: {
+        label: '代码梦核头像',
+        filter: 'code',
+        ratio: 'avatar',
+        strength: 82,
+        adjustments: { brightness: -2, contrast: 18, saturation: -4, temperature: -8, grain: 16, vignette: 34 },
+        frame: { enabled: true, padding: 16, radius: 48, color: '#101418' },
+        text: 'DREAM.EXE',
+        stickers: ['扫描线']
+      },
+      cleanSelfie: {
+        label: '冷白清透自拍',
+        filter: 'clean',
+        ratio: 'xhs',
+        strength: 58,
+        adjustments: { brightness: 12, contrast: 2, saturation: -8, temperature: -12, grain: 4, vignette: 8 },
+        frame: { enabled: true, padding: 28, radius: 20, color: '#f8fbff' },
+        text: 'clean mood',
+        stickers: []
+      },
+      hkDiary: {
+        label: '港风夜色日记',
+        filter: 'hk',
+        ratio: 'moments',
+        strength: 86,
+        adjustments: { brightness: -4, contrast: 22, saturation: 16, temperature: 12, grain: 24, vignette: 42 },
+        frame: { enabled: true, padding: 18, radius: 10, color: '#1a1114' },
+        text: '夜色刚刚好',
+        stickers: ['胶片日期']
+      },
+      jpCover: {
+        label: '日杂图文封面',
+        filter: 'magazine',
+        ratio: 'xhs',
+        strength: 74,
+        adjustments: { brightness: 6, contrast: 10, saturation: 2, temperature: 4, grain: 8, vignette: 12 },
+        frame: { enabled: true, padding: 72, radius: 0, color: '#f3efe7' },
+        text: 'Weekend Notes',
+        stickers: ['标签']
+      },
+      dreamWallpaper: {
+        label: '梦核手机壁纸',
+        filter: 'dream',
+        ratio: 'wallpaper',
+        strength: 88,
+        adjustments: { brightness: 10, contrast: -4, saturation: 10, temperature: -2, grain: 18, vignette: 20 },
+        frame: { enabled: false, padding: 0, radius: 0, color: '#ffffff' },
+        text: 'soft signal',
+        stickers: ['星星']
+      }
+    };
+
+    const adjustmentLabels = {
+      brightness: '亮度',
+      contrast: '对比度',
+      saturation: '饱和度',
+      temperature: '色温',
+      grain: '颗粒',
+      vignette: '暗角'
+    };
+
+    function cloneState() {
+      return JSON.parse(JSON.stringify({
+        ratio: state.ratio,
+        currentFilter: state.currentFilter,
+        styleStrength: state.styleStrength,
+        adjustments: state.adjustments,
+        frame: state.frame,
+        layers: state.layers,
+        selectedLayerId: state.selectedLayerId,
+        caption: state.caption,
+        stats: state.stats,
+        imageMood: state.imageMood,
+        imageFeatures: state.imageFeatures
+      }));
+    }
+
+    function restoreState(snap) {
+      Object.assign(state, snap);
+      syncUI();
+      requestRender();
+    }
+
+    function saveHistory(label) {
+      historyPast.push(cloneState());
+      if (historyPast.length > 60) historyPast.shift();
+      historyFuture = [];
+      state.stats.actions += 1;
+      state.stats.lastAction = label;
+      updateInsight();
+    }
+
+    function setAction(label) {
+      state.stats.actions += 1;
+      state.stats.lastAction = label;
+      updateReadyCheck();
+      updateInsight();
+    }
+
+    function setupUI() {
+      const filtersBox = document.getElementById('filterButtons');
+      Object.entries(filterRegistry).forEach(([key, item]) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.dataset.filter = key;
+        btn.textContent = item.label;
+        btn.addEventListener('click', () => {
+          saveHistory('切换风格：' + item.label);
+          state.currentFilter = key;
+          state.stats.favoriteFilter = key;
+          updateCaption();
+          syncUI();
+          requestRender();
+        });
+        filtersBox.appendChild(btn);
+      });
+
+      const templatesBox = document.getElementById('templateButtons');
+      Object.entries(templateRegistry).forEach(([key, tpl]) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = tpl.label;
+        btn.addEventListener('click', () => applyTemplate(key));
+        templatesBox.appendChild(btn);
+      });
+
+      renderStickerPalette();
+      renderReferenceGallery();
+
+      const ratiosBox = document.getElementById('ratioButtons');
+      Object.entries(publishRatios).forEach(([key, ratio]) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.dataset.ratio = key;
+        btn.textContent = ratio.label;
+        btn.addEventListener('click', () => {
+          saveHistory('切换比例：' + ratio.label);
+          state.ratio = key;
+          resizeCanvasToRatio();
+          updateCaption();
+          syncUI();
+          requestRender();
+        });
+        ratiosBox.appendChild(btn);
+      });
+
+      const adjustBox = document.getElementById('adjustmentControls');
+      Object.entries(adjustmentLabels).forEach(([key, label]) => {
+        const control = document.createElement('label');
+        control.className = 'control';
+        const minMax = key === 'grain' || key === 'vignette' ? 'min="0" max="80"' : 'min="-50" max="50"';
+        control.innerHTML = `
+          <div class="control-row"><span>${label}</span><span id="${key}Value">${state.adjustments[key]}</span></div>
+          <input id="${key}" type="range" ${minMax} value="${state.adjustments[key]}">
+        `;
+        adjustBox.appendChild(control);
+        let adjustmentArmed = false;
+        control.querySelector('input').addEventListener('pointerdown', () => {
+          if (!adjustmentArmed) saveHistory('调整' + label);
+          adjustmentArmed = true;
+        });
+        control.querySelector('input').addEventListener('input', (e) => {
+          state.adjustments[key] = Number(e.target.value);
+          document.getElementById(key + 'Value').textContent = e.target.value;
+          setAction('调整' + label);
+          requestRender();
+        });
+        control.querySelector('input').addEventListener('change', () => { adjustmentArmed = false; });
+      });
+
+      bind('uploadBtn', 'click', () => document.getElementById('imageInput').click());
+      bind('imageInput', 'change', loadImage);
+      bind('demoBtn', 'click', createDemoImage);
+      bind('exportPngBtn', 'click', () => exportImage('image/png'));
+      bind('exportJpgBtn', 'click', () => exportImage('image/jpeg'));
+      bind('copyCaptionBtn', 'click', copyCaption);
+      bind('copyCaptionBtn2', 'click', copyCaption);
+      bind('regenCaptionBtn', 'click', () => { saveHistory('生成发布文案'); updateCaption(true); });
+      bind('addTextBtn', 'click', addTextLayer);
+      bind('addStickerBtn', 'click', addStickerLayer);
+      bind('blindBoxBtn', 'click', blindBox);
+      bind('fitBtn', 'click', () => { resizeCanvasToRatio(); requestRender(); });
+      bind('resetBtn', 'click', resetProject);
+      bind('compareBtn', 'click', () => {
+        state.compare = !state.compare;
+        document.getElementById('compareBtn').classList.toggle('active', state.compare);
+        setAction(state.compare ? '开启对比线' : '关闭对比线');
+        requestRender();
+      });
+      bind('undoBtn', 'click', undo);
+      bind('redoBtn', 'click', redo);
+      bind('toggleFrameBtn', 'click', () => {
+        saveHistory('切换边框');
+        state.frame.enabled = !state.frame.enabled;
+        updateReadyCheck();
+        requestRender();
+      });
+
+      document.querySelectorAll('.tool').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.tool = btn.dataset.tool;
+          document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b === btn));
+          setAction('切换工具：' + btn.textContent);
+        });
+      });
+
+      bindRange('styleStrength', 'styleStrengthValue', '调整风格强度', (v) => {
+        state.styleStrength = v;
+        setAction('调整风格强度');
+        requestRender();
+      });
+      bindRange('padding', 'paddingValue', '调整留白', (v) => { state.frame.padding = v; requestRender(); updateReadyCheck(); });
+      bindRange('radius', 'radiusValue', '调整圆角', (v) => { state.frame.radius = v; requestRender(); });
+      bind('frameColor', 'pointerdown', () => saveHistory('调整边框颜色'));
+      bind('frameColor', 'input', e => { state.frame.color = e.target.value; requestRender(); });
+      bindEditable('layerText', '编辑文字图层');
+      bindEditable('fontSize', '编辑文字字号');
+      bindEditable('opacity', '编辑图层透明度');
+      bindEditable('layerColor', '编辑图层颜色');
+      bindEditable('blendMode', '编辑混合模式');
+      bindEditable('fontFamily', '编辑字体风格');
+      bind('addCustomStickerBtn', 'click', addCustomStickerLayer);
+
+      canvas.addEventListener('pointerdown', onPointerDown);
+      canvas.addEventListener('pointermove', onPointerMove);
+      canvas.addEventListener('pointerup', onPointerUp);
+      canvas.addEventListener('pointercancel', onPointerUp);
+      window.addEventListener('resize', () => {
+        resizeCanvasToRatio();
+        requestRender();
+      });
+
+      resizeCanvasToRatio();
+      updateCaption(true);
+      syncUI();
+      requestRender();
+    }
+
+    function bind(id, event, handler) {
+      document.getElementById(id).addEventListener(event, handler);
+    }
+
+    function bindRange(id, valueId, label, onInput) {
+      const el = document.getElementById(id);
+      let armed = false;
+      el.addEventListener('pointerdown', () => {
+        if (!armed) saveHistory(label);
+        armed = true;
+      });
+      el.addEventListener('input', e => {
+        const value = Number(e.target.value);
+        document.getElementById(valueId).textContent = value;
+        onInput(value);
+      });
+      el.addEventListener('change', () => { armed = false; });
+    }
+
+    function bindEditable(id, label) {
+      const el = document.getElementById(id);
+      let armed = false;
+      const arm = () => {
+        if (!armed) saveHistory(label);
+        armed = true;
+      };
+      el.addEventListener('focus', arm);
+      el.addEventListener('pointerdown', arm);
+      el.addEventListener(id === 'blendMode' || id === 'fontFamily' ? 'change' : 'input', editSelectedLayer);
+      el.addEventListener('blur', () => { armed = false; });
+    }
+
+    function renderStickerPalette() {
+      const box = document.getElementById('stickerButtons');
+      box.innerHTML = '';
+      stickerPresets.forEach(preset => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = preset.name;
+        btn.title = '添加' + preset.name;
+        btn.addEventListener('click', () => addStickerLayer(preset.name));
+        box.appendChild(btn);
+      });
+    }
+
+    function renderReferenceGallery() {
+      const box = document.getElementById('referenceGallery');
+      if (!box) return;
+      box.innerHTML = '';
+      referencePresets.forEach(ref => {
+        const btn = document.createElement('button');
+        btn.className = 'reference-card';
+        const thumb = document.createElement('img');
+        thumb.alt = ref.name;
+        thumb.src = ref.type === 'image' ? ref.src : makeReferenceDataUrl(ref.kind, 360, 270);
+        const label = document.createElement('span');
+        label.textContent = ref.name;
+        btn.append(thumb, label);
+        btn.addEventListener('click', () => loadReferencePreset(ref));
+        box.appendChild(btn);
+      });
+    }
+
+    function makeReferenceDataUrl(kind, width, height) {
+      const c = document.createElement('canvas');
+      c.width = width;
+      c.height = height;
+      const g = c.getContext('2d');
+      g.fillStyle = '#fffaf1';
+      g.fillRect(0, 0, width, height);
+      g.strokeStyle = 'rgba(75,112,142,.16)';
+      for (let x = 0; x < width; x += 18) {
+        g.beginPath(); g.moveTo(x, 0); g.lineTo(x, height); g.stroke();
+      }
+      for (let y = 0; y < height; y += 18) {
+        g.beginPath(); g.moveTo(0, y); g.lineTo(width, y); g.stroke();
+      }
+      if (kind === 'gridRedBlue') {
+        g.fillStyle = '#bd514a';
+        g.fillRect(0, 0, width * .34, height);
+        drawPaperTear(g, width * .34, height);
+        drawMiniStickerBoard(g, width, height, '#78b7e7', '#bd514a', 'Preview');
+      } else if (kind === 'softBlue') {
+        g.fillStyle = '#dff2ff';
+        g.fillRect(0, 0, width, height);
+        drawMiniStickerBoard(g, width, height, '#78b7e7', '#ffffff', 'BLUE DAY');
+      } else {
+        g.fillStyle = '#fff5f8';
+        g.fillRect(0, 0, width, height);
+        drawMiniStickerBoard(g, width, height, '#ff9fbe', '#ffffff', 'sweet');
+      }
+      return c.toDataURL('image/png');
+    }
+
+    function drawPaperTear(g, x, height) {
+      g.fillStyle = '#fffaf1';
+      g.beginPath();
+      g.moveTo(x, 0);
+      for (let y = 0; y <= height; y += 16) {
+        g.lineTo(x + Math.sin(y * .12) * 7 + (y % 32 ? 3 : -4), y);
+      }
+      g.lineTo(x + 18, height);
+      g.lineTo(x + 18, 0);
+      g.closePath();
+      g.fill();
+    }
+
+    function drawMiniStickerBoard(g, width, height, accent, red, title) {
+      g.globalAlpha = .92;
+      g.fillStyle = red;
+      g.beginPath();
+      g.roundRect(width * .58, height * .18, width * .27, height * .34, 12);
+      g.fill();
+      g.globalAlpha = 1;
+      g.strokeStyle = accent;
+      g.lineWidth = 8;
+      g.strokeRect(width * .56, height * .22, width * .28, height * .36);
+      g.fillStyle = accent;
+      g.font = '800 36px Trebuchet MS, Arial';
+      g.fillText(title, width * .38, height * .22);
+      g.fillStyle = '#ffffff';
+      g.beginPath();
+      g.arc(width * .42, height * .58, 54, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = red;
+      g.lineWidth = 5;
+      g.stroke();
+      g.fillStyle = accent;
+      for (let i = 0; i < 11; i++) {
+        g.beginPath();
+        g.arc(22 + i * 31, height * .74 + Math.sin(i) * 15, 4, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+
+    function loadReferencePreset(ref) {
+      const src = ref.type === 'image' ? ref.src : makeReferenceDataUrl(ref.kind, 1280, 960);
+      loadReferenceImage(src, ref.name);
+    }
+
+    function loadReferenceImage(src, name) {
+      const img = new Image();
+      img.onload = () => {
+        saveHistory('使用参考图：' + name);
+        state.image = img;
+        state.imageName = name;
+        state.imageMood = analyzeImageMood(img);
+        document.getElementById('imageMeta').textContent = `${name} · ${img.naturalWidth} x ${img.naturalHeight}`;
+        updateRecommendations();
+        updateCaption(true);
+        syncUI();
+        requestRender();
+      };
+      img.onerror = () => setAction('参考图没有加载成功，请检查 outputs 文件夹');
+      img.src = src;
+    }
+
+    function resizeCanvasToRatio() {
+      const ratio = publishRatios[state.ratio];
+      const isNarrow = window.matchMedia('(max-width: 720px)').matches;
+      const maxW = Math.max(isNarrow ? 260 : 340, wrap.clientWidth - (isNarrow ? 20 : 36));
+      const maxH = Math.max(isNarrow ? 280 : 420, wrap.clientHeight - (isNarrow ? 20 : 36));
+      const scale = Math.min(maxW / ratio.w, maxH / ratio.h, 1);
+      canvas.width = Math.round(ratio.w * scale);
+      canvas.height = Math.round(ratio.h * scale);
+    }
+
+    function loadImage(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        saveHistory('上传图片');
+        state.image = img;
+        state.imageName = file.name;
+        state.imageMood = analyzeImageMood(img);
+        document.getElementById('imageMeta').textContent = `${file.name} · ${img.naturalWidth} x ${img.naturalHeight}`;
+        updateRecommendations();
+        updateCaption(true);
+        syncUI();
+        requestRender();
+      };
+      img.src = URL.createObjectURL(file);
+    }
+
+    function createDemoImage() {
+      loadReferencePreset(referencePresets[0]);
+      return;
+      const img = new Image();
+      img.onload = () => {
+        saveHistory('使用参考测试图');
+        state.image = img;
+        state.imageName = 'sugar-koi-reference';
+        state.imageMood = analyzeImageMood(img);
+        document.getElementById('imageMeta').textContent = `sugar-koi-reference · ${img.naturalWidth} x ${img.naturalHeight}`;
+        updateRecommendations();
+        updateCaption(true);
+        syncUI();
+        requestRender();
+      };
+      img.src = 'sugar-koi-reference.jpg';
+    }
+
+    function analyzeImageMood(img) {
+      const mini = document.createElement('canvas');
+      mini.width = 80;
+      mini.height = 80;
+      const m = mini.getContext('2d');
+      m.drawImage(img, 0, 0, 80, 80);
+      const data = m.getImageData(0, 0, 80, 80).data;
+      let r = 0, g = 0, b = 0, lum = 0, sat = 0, warm = 0, green = 0, pinkBlue = 0;
+      const lums = [];
+      for (let i = 0; i < data.length; i += 4) {
+        const pr = data[i];
+        const pg = data[i + 1];
+        const pb = data[i + 2];
+        const max = Math.max(pr, pg, pb);
+        const min = Math.min(pr, pg, pb);
+        const pl = (pr + pg + pb) / 3;
+        r += pr; g += pg; b += pb; lum += pl;
+        sat += max === 0 ? 0 : (max - min) / max;
+        warm += (pr - pb) / 255;
+        green += Math.max(0, pg - Math.max(pr, pb)) / 255;
+        pinkBlue += Math.max(0, pr - pg) / 255 + Math.max(0, pb - pg) / 255;
+        lums.push(pl);
+      }
+      const n = data.length / 4;
+      r /= n; g /= n; b /= n; lum /= n;
+      sat /= n;
+      warm /= n;
+      green /= n;
+      pinkBlue /= n;
+      const variance = lums.reduce((sum, value) => sum + Math.pow(value - lum, 2), 0) / lums.length;
+      const contrast = Math.sqrt(variance) / 128;
+      const features = {
+        r,
+        g,
+        b,
+        brightness: lum / 255,
+        saturation: sat,
+        warmth: warm,
+        greenBias: green,
+        pinkBlueBias: pinkBlue,
+        contrast,
+        aspect: img.naturalWidth / img.naturalHeight,
+        orientation: img.naturalWidth > img.naturalHeight * 1.15 ? 'landscape' : img.naturalHeight > img.naturalWidth * 1.15 ? 'portrait' : 'square'
+      };
+      let mood = '日常自然';
+      if (features.brightness < .38) mood = '暗调夜色';
+      else if (features.greenBias > .06) mood = '绿色校园';
+      else if (features.pinkBlueBias > .16 && features.brightness > .52) mood = '粉蓝明亮';
+      else if (features.warmth > .12) mood = '暖调胶片';
+      else if (features.warmth < -.08 || features.brightness > .68) mood = '冷调清透';
+      features.mood = mood;
+      state.imageFeatures = features;
+      return mood;
+    }
+
+    function updateRecommendations() {
+      const list = document.getElementById('recommendList');
+      list.innerHTML = '';
+      if (!state.image) {
+        const empty = document.createElement('div');
+        empty.className = 'small';
+        empty.textContent = '上传图片后，糖水和鲤鱼会直接给你 3 个可发布方案。';
+        list.appendChild(empty);
+        return;
+      }
+      buildOutputPlans().forEach((plan, index) => {
+        const card = document.createElement('div');
+        card.className = 'plan-card';
+        card.innerHTML = `
+          <strong>${index + 1}. ${plan.name}</strong>
+          <p>${plan.reason}</p>
+          <div class="plan-meta">
+            <span>${filterRegistry[plan.filter].label}</span>
+            <span>${publishRatios[plan.ratio].label}</span>
+            <span>${plan.coverText}</span>
+          </div>
+          <p>${plan.title}<br>${plan.captionBody}<br>${plan.tags.join(' ')}</p>
+          <button class="primary">应用这个方案</button>
+        `;
+        card.querySelector('button').addEventListener('click', () => applyOutputPlan(plan));
+        list.appendChild(card);
+      });
+    }
+
+    function buildOutputPlans() {
+      const features = {
+        brightness: .55,
+        saturation: .24,
+        warmth: 0,
+        greenBias: 0,
+        pinkBlueBias: 0,
+        contrast: .25,
+        orientation: 'portrait',
+        ...(state.imageFeatures || {})
+      };
+      const candidates = [
+        { name: '小田吃鲤鱼', filter: 'xiaotianKoi', ratio: 'xhs', coverText: '我的平仄', title: '一张很有平仄的日常', tags: ['#小田吃鲤鱼', '#简约风', '#日常照片'], stickers: ['标签', '圆点高光'], tone: '简约日常', strength: 58, fit: f => 22 + (1 - f.saturation) * 36 + (1 - f.contrast) * 18 + f.brightness * 14 + portraitBonus(f, 6) },
+        { name: '日常透亮', filter: 'dailyBright', ratio: 'xhs', coverText: '太阳大一点', title: '今天的太阳更大一点', tags: ['#日常透亮', '#通透感', '#轻修图'], stickers: ['圆点高光'], tone: '透亮日常', strength: 64, fit: f => 24 + f.brightness * 26 + (1 - f.saturation) * 18 + Math.max(0, .55 - f.contrast) * 18 + portraitBonus(f, 8) },
+        { name: '爱吃茶叶蛋的西瓜', filter: 'watermelonEgg', ratio: 'xhs', coverText: '敲门声是东东', title: '幸福敲门的粉白时刻', tags: ['#爱吃茶叶蛋的西瓜', '#清甜风', '#粉白色调'], stickers: ['心动框', '星星'], tone: '清甜粉白', strength: 72, fit: f => 23 + f.brightness * 24 + f.pinkBlueBias * 62 + Math.max(0, f.saturation - .12) * 14 + portraitBonus(f, 10) },
+        { name: '鲤鱼东东煮', filter: 'koiBlue', ratio: 'wide', coverText: '白纸和蝴蝶', title: '浅蓝色里有一只蝴蝶', tags: ['#鲤鱼东东煮', '#浅蓝色调', '#清爽感'], stickers: ['坐标', '圆点高光'], tone: '浅蓝清爽', strength: 68, fit: f => 22 + Math.max(0, -f.warmth) * 54 + f.brightness * 18 + landscapeBonus(f, 18) + (1 - f.saturation) * 10 },
+        { name: '小红书情绪封面', filter: 'sakura', ratio: 'xhs', coverText: '妈妈生的', title: '天生一点可爱', tags: ['#小红书封面', '#氛围感照片', '#今日出片'], stickers: ['星星', '心动框', '标签'], tone: '甜感封面', strength: 76, fit: f => f.brightness * 26 + f.pinkBlueBias * 70 + f.saturation * 16 + portraitBonus(f, 10) },
+        { name: '冷白清透轻修', filter: 'clean', ratio: 'xhs', coverText: '白纸不飞走', title: '白纸一样的清透感', tags: ['#冷白清透', '#干净感', '#轻修图'], stickers: ['圆点高光'], tone: '干净克制', strength: 56, fit: f => f.brightness * 30 + Math.max(0, -f.warmth) * 60 + (1 - f.saturation) * 16 + portraitBonus(f, 8) },
+        { name: '校园磁带日记', filter: 'campus', ratio: 'moments', coverText: '一重山', title: '起伏里也有好天气', tags: ['#校园感', '#树影', '#朋友圈'], stickers: ['扫描线', '手写箭头'], tone: '青春日记', strength: 74, fit: f => f.greenBias * 140 + f.brightness * 14 + f.saturation * 12 },
+        { name: 'CCD 复古快照', filter: 'ccd', ratio: 'xhs', coverText: '2013 / 东东', title: '幸福的敲门声', tags: ['#CCD', '#复古照片', '#日常记录'], stickers: ['胶片日期', '圆点高光'], tone: '复古随拍', strength: 82, fit: f => f.contrast * 22 + f.saturation * 18 + Math.abs(f.warmth) * 18 + portraitBonus(f, 5) },
+        { name: '港风夜色日记', filter: 'hk', ratio: 'moments', coverText: '不顺从', title: '风吹不走的那一点', tags: ['#港风', '#夜景', '#电影感'], stickers: ['胶片日期', '坐标'], tone: '电影旁白', strength: 86, fit: f => (1 - f.brightness) * 42 + Math.max(0, f.warmth) * 55 + f.contrast * 18 },
+        { name: '赛博霓虹横图', filter: 'neon', ratio: 'wide', coverText: 'BUTTERFLY', title: '无法吹走一只蝴蝶', tags: ['#赛博霓虹', '#城市夜景', '#横图'], stickers: ['标签', '坐标'], tone: '电子宣言', strength: 80, fit: f => (1 - f.brightness) * 30 + Math.max(0, -f.warmth) * 38 + landscapeBonus(f, 22) + f.contrast * 14 },
+        { name: '代码梦境头像', filter: 'code', ratio: 'avatar', coverText: 'NOT OBEY', title: '生命力是不顺从', tags: ['#代码梦境', '#头像', '#赛博感'], stickers: ['扫描线', '坐标'], tone: '电子梦话', strength: 82, fit: f => (1 - f.brightness) * 24 + Math.max(0, -f.warmth) * 28 + f.contrast * 20 + squareBonus(f, 12) },
+        { name: '废片胶片封面', filter: 'badfilm', ratio: 'xhs', coverText: '妈妈生的', title: '有用但不用太有用', tags: ['#废片风', '#胶片感', '#随手拍'], stickers: ['胶片日期', '胶带'], tone: '松弛随笔', strength: 84, fit: f => Math.max(0, f.warmth) * 65 + f.saturation * 16 + f.contrast * 14 },
+        { name: '日杂图文首图', filter: 'magazine', ratio: 'xhs', coverText: '一重山', title: '今天也有今天的起伏', tags: ['#日杂风', '#图文封面', '#生活方式'], stickers: ['标签', '胶带'], tone: '生活方式', strength: 70, fit: f => .5 * 20 + (1 - Math.abs(f.warmth)) * 12 + portraitBonus(f, 8) },
+        { name: '梦核手机壁纸', filter: 'dream', ratio: 'wallpaper', coverText: '一只蝴蝶', title: '风和蝴蝶都很轻', tags: ['#手机壁纸', '#梦核', '#柔光'], stickers: ['星星', '圆点高光'], tone: '梦境短句', strength: 88, fit: f => f.pinkBlueBias * 56 + Math.max(0, -f.warmth) * 20 + portraitBonus(f, 18) }
+      ];
+      return selectDiversePlans(candidates, features)
+        .map(plan => makeOutputPlan(plan.name, plan.reason, plan.filter, plan.ratio, tuneCoverText(plan, features), tuneTitle(plan, features), tuneTags(plan, features), tuneStickers(plan, features), tuneStrength(plan, features), generateCaptionBody(plan, features), plan.tone));
+    }
+
+    function selectDiversePlans(candidates, features) {
+      const customFilters = new Set(['xiaotianKoi', 'dailyBright', 'watermelonEgg', 'koiBlue']);
+      const brightFilters = new Set(['clean', 'sakura', 'dream', 'magazine', 'sony']);
+      const expressiveFilters = new Set(['ccd', 'badfilm', 'campus', 'hk', 'neon', 'code']);
+      const seed = recommendationSeed(features);
+      const scored = candidates
+        .map((candidate, index) => {
+          const jitter = seededNoise(seed + index * 19) * 10 - 5;
+          const fatigue = state.currentFilter === candidate.filter ? -10 : 0;
+          const score = candidate.fit(features) + jitter + fatigue;
+          return { ...candidate, score, reason: describePlanReason(candidate, features), adjustments: planAdjustments(candidate.filter), frame: planFrame(candidate.filter, candidate.ratio) };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      const selected = [];
+      const addFrom = (predicate, offset = 0) => {
+        const group = scored.filter(plan => predicate(plan) && !selected.some(item => item.filter === plan.filter));
+        if (!group.length) return;
+        selected.push(group[Math.min(offset % group.length, group.length - 1)]);
+      };
+
+      addFrom(plan => customFilters.has(plan.filter), seed % 2);
+      if (features.brightness > .62 || features.pinkBlueBias > .12 || features.warmth < -.05) {
+        addFrom(plan => brightFilters.has(plan.filter), Math.floor(seed / 3) % 2);
+        addFrom(plan => expressiveFilters.has(plan.filter), Math.floor(seed / 7) % 2);
+      } else {
+        addFrom(plan => expressiveFilters.has(plan.filter), Math.floor(seed / 5) % 3);
+        addFrom(plan => brightFilters.has(plan.filter), Math.floor(seed / 11) % 2);
+      }
+
+      scored.forEach(plan => {
+        if (selected.length < 3 && !selected.some(item => item.filter === plan.filter)) selected.push(plan);
+      });
+      return selected.slice(0, 3);
+    }
+
+    function recommendationSeed(features) {
+      return Math.abs(Math.round(
+        features.brightness * 101 +
+        features.saturation * 211 +
+        features.warmth * 307 +
+        features.greenBias * 401 +
+        features.pinkBlueBias * 503 +
+        features.contrast * 607 +
+        (features.orientation === 'landscape' ? 71 : features.orientation === 'square' ? 37 : 13)
+      ));
+    }
+
+    function seededNoise(seed) {
+      const x = Math.sin(seed * 12.9898) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    function portraitBonus(features, value) {
+      return features.orientation === 'portrait' ? value : 0;
+    }
+
+    function landscapeBonus(features, value) {
+      return features.orientation === 'landscape' ? value : 0;
+    }
+
+    function squareBonus(features, value) {
+      return features.orientation === 'square' ? value : 0;
+    }
+
+    function describePlanReason(plan, features) {
+      const clues = [];
+      if (features.orientation === 'portrait') clues.push('竖图构图适合做封面或壁纸');
+      if (features.orientation === 'landscape') clues.push('横图更适合做横版氛围图');
+      if (features.brightness < .38) clues.push('画面偏暗，可以强化夜色和电影感');
+      if (features.brightness > .68) clues.push('画面明亮，适合轻盈干净的处理');
+      if (features.saturation > .36) clues.push('颜色比较活跃，适合更有网感的风格');
+      if (features.saturation < .18) clues.push('饱和度偏低，适合做高级感轻修');
+      if (features.greenBias > .05) clues.push('绿色和树影倾向明显');
+      if (features.pinkBlueBias > .14) clues.push('粉蓝倾向适合柔光和梦核感');
+      if (features.warmth > .1) clues.push('暖色倾向适合胶片和港风');
+      if (features.warmth < -.08) clues.push('冷色倾向适合清透或电子感');
+      return `${clues.slice(0, 2).join('，') || '这张图适合先做轻量风格化'}，所以推荐「${plan.name}」。`;
+    }
+
+    function tuneCoverText(plan, features) {
+      if (features.brightness < .38 && plan.filter === 'hk') return '夜色刚刚好';
+      if (features.greenBias > .05 && plan.filter === 'campus') return '放学后的风';
+      if (features.orientation === 'wallpaper' && plan.filter === 'dream') return 'soft signal';
+      return plan.coverText;
+    }
+
+    function tuneTitle(plan, features) {
+      if (features.brightness < .38 && ['hk', 'neon', 'code'].includes(plan.filter)) return '把夜色调成故事感';
+      if (features.brightness > .68 && plan.filter === 'clean') return '明亮照片这样轻修就够了';
+      if (features.greenBias > .05 && plan.filter === 'campus') return '树影和风都很像青春片';
+      if (features.warmth > .1 && ['badfilm', 'hk'].includes(plan.filter)) return '暖光里有胶片的运气';
+      return plan.title;
+    }
+
+    function tuneTags(plan, features) {
+      const tags = [...plan.tags];
+      if (features.orientation === 'portrait') tags.push('#竖图封面');
+      if (features.orientation === 'landscape') tags.push('#横图氛围');
+      if (features.brightness < .38) tags.push('#暗调照片');
+      if (features.brightness > .68) tags.push('#明亮感');
+      if (features.greenBias > .05) tags.push('#树影感');
+      return [...new Set(tags)].slice(0, 5);
+    }
+
+    function tuneStickers(plan, features) {
+      const stickers = [...plan.stickers];
+      if (features.orientation === 'landscape' && !stickers.includes('坐标')) stickers.push('坐标');
+      if (features.brightness > .68 && !stickers.includes('圆点高光')) stickers.push('圆点高光');
+      if (features.warmth > .1 && !stickers.includes('胶带')) stickers.push('胶带');
+      if (features.pinkBlueBias > .14 && !stickers.includes('心动框')) stickers.push('心动框');
+      return [...new Set(stickers)].slice(0, 3);
+    }
+
+    function generateCaptionBody(plan, features) {
+      const scene = [];
+      if (features.brightness < .38) scene.push('暗一点的画面反而更有故事感');
+      else if (features.brightness > .68) scene.push('光线很干净，适合少修一点');
+      else scene.push('这张的日常感刚好');
+      if (features.greenBias > .05) scene.push('树影和绿色可以保留');
+      if (features.warmth > .1) scene.push('暖色调会让画面更像胶片');
+      if (features.warmth < -.08) scene.push('冷调会显得更清透');
+      if (features.orientation === 'portrait') scene.push('竖图直接做封面很顺');
+      if (features.orientation === 'landscape') scene.push('横图适合留一点呼吸感');
+
+      const toneLine = {
+        '甜感封面': '保留一点“妈妈生的”可爱感，贴纸少一点，太阳大一点。',
+        '干净克制': '像一张白纸，但不需要被风吹走。',
+        '青春日记': '一重山有一重山的起伏，画面也可以有自己的平仄。',
+        '复古随拍': '日期和颗粒留下敲门声，东东感会更明显。',
+        '电影旁白': '风可以吹过去，但画面里要留下不顺从的一点。',
+        '电子宣言': '把蝴蝶、白纸和坐标放在一起，轻但有力量。',
+        '电子梦话': '保留一点不顺从的信号，像梦里醒着的一帧。',
+        '松弛随笔': '不用证明天生我材，松一点也很好。',
+        '生活方式': '留白给起伏，标题给平仄。',
+        '梦境短句': '蝴蝶很轻，但不是会被吹走的轻。',
+        '简约日常': '少一点装饰，留下自己的平仄。',
+        '透亮日常': '把太阳调大一点，幸福感就会敲门。',
+        '清甜粉白': '白色和粉色负责清甜，东东负责敲门。',
+        '浅蓝清爽': '浅蓝像白纸旁边的风，轻，但不顺从。'
+      }[plan.tone] || '做轻量风格化，保留照片自己的气质。';
+
+      return `${scene.slice(0, 2).join('，')}。\n${toneLine}`;
+    }
+
+    function tuneStrength(plan, features) {
+      let strength = plan.strength;
+      if (features.saturation > .42) strength -= 8;
+      if (features.brightness < .32) strength += 6;
+      if (plan.filter === 'clean' && features.brightness > .72) strength -= 6;
+      return Math.max(46, Math.min(92, Math.round(strength)));
+    }
+
+    function buildStaticOutputPlans() {
+      const base = {
+        '粉蓝明亮': [
+          makeOutputPlan('小红书春日封面', '画面偏明亮，适合走轻甜、柔光、封面感路线。', 'sakura', 'xhs', '今天也要漂亮出逃', '把春天装进口袋', ['#春日出片', '#氛围感照片', '#小红书封面'], ['星星', '标签'], 78),
+          makeOutputPlan('梦核头像实验', '粉蓝色很适合做轻微失真和梦核柔光，适合头像或主页图。', 'dream', 'avatar', 'soft signal', '像一场软软的梦', ['#梦核', '#头像', '#AI感'], ['星星'], 84),
+          makeOutputPlan('冷白清透日常', '降低色温和饱和度，让照片更干净，适合自拍或日常分享。', 'clean', 'xhs', 'clean mood', '冷白清透的一天', ['#冷白皮', '#日常出片', '#干净感'], [], 58)
+        ],
+        '绿色校园': [
+          makeOutputPlan('校园磁带日记', '绿色和树影适合做校园、DV、磁带质感。', 'campus', 'moments', '放学后的风', '把今天录进磁带里', ['#校园感', '#树影', '#朋友圈'], ['扫描线'], 76),
+          makeOutputPlan('CCD 操场快照', '用颗粒和日期水印把日常照片变成复古快照。', 'ccd', 'xhs', '2006 / sunny', '今天有点 CCD', ['#CCD', '#复古照片', '#日常记录'], ['胶片日期'], 82),
+          makeOutputPlan('日杂生活封面', '保留自然颜色，加留白和标题，适合作为图文首图。', 'magazine', 'xhs', 'Weekend Notes', '周末日杂感记录', ['#日杂风', '#生活方式', '#封面设计'], ['标签'], 68)
+        ],
+        '暗调夜色': [
+          makeOutputPlan('港风夜色日记', '暗调照片适合增强暖光、颗粒和电影感。', 'hk', 'moments', '夜色刚刚好', '今晚适合慢一点', ['#港风', '#夜景', '#电影感'], ['胶片日期'], 86),
+          makeOutputPlan('代码梦境头像', '低亮度画面适合做电子感、赛博感头像。', 'code', 'avatar', 'DREAM.EXE', '像一场低烧的电子梦', ['#代码梦境', '#头像', '#赛博感'], ['扫描线'], 82),
+          makeOutputPlan('赛博霓虹横图', '用蓝紫霓虹增强城市夜色，适合横图背景。', 'neon', 'wide', 'NEON WALK', '夜色里有霓虹信号', ['#赛博霓虹', '#城市夜景', '#横图'], ['标签'], 80)
+        ],
+        '冷调清透': [
+          makeOutputPlan('冷白清透封面', '冷调照片适合做干净、轻盈、少装饰的封面。', 'clean', 'xhs', 'clean mood', '冷白清透的一天', ['#冷白清透', '#小红书封面', '#干净感'], [], 58),
+          makeOutputPlan('索尼蓝调日常', '保留真实感，略微提高锐度和蓝绿色，适合朋友圈。', 'sony', 'moments', 'blue hour', '今天的蓝调刚好', ['#索尼感', '#朋友圈', '#日常照片'], ['胶片日期'], 62),
+          makeOutputPlan('梦核手机壁纸', '冷调和柔光适合做 9:16 壁纸，留出呼吸感。', 'dream', 'wallpaper', 'soft signal', '柔光里也有信号', ['#壁纸', '#梦核', '#柔光'], ['星星'], 86)
+        ],
+        '暖调胶片': [
+          makeOutputPlan('废片胶片封面', '暖色画面适合漏光、泛黄、颗粒，做成随手拍质感。', 'badfilm', 'xhs', '没拍好也很美', '废片也有自己的运气', ['#废片风', '#胶片感', '#随手拍'], ['胶片日期'], 84),
+          makeOutputPlan('港风暖夜日记', '暖调能放大街灯和生活感，适合日记式发布。', 'hk', 'moments', '夜色刚刚好', '把暖光留给今天', ['#港风夜色', '#生活记录', '#朋友圈'], ['标签'], 80),
+          makeOutputPlan('CCD 复古头像', '加紫边、颗粒和日期水印，适合做头像或合集封面。', 'ccd', 'avatar', 'CCD GIRL', '今天有点复古', ['#CCD感', '#复古头像', '#氛围感'], ['胶片日期'], 78)
+        ],
+        '日常自然': [
+          makeOutputPlan('索尼自然出片', '自然照片先保留质感，只做轻微色彩增强。', 'sony', 'moments', 'ordinary day', '普通日子也能出片', ['#日常出片', '#朋友圈', '#自然感'], [], 60),
+          makeOutputPlan('日杂图文封面', '加留白、标题和标签，让普通照片更像图文首图。', 'magazine', 'xhs', 'Weekend Notes', '给今天做一张封面', ['#日杂风', '#小红书封面', '#生活方式'], ['标签'], 72),
+          makeOutputPlan('冷白轻修版本', '更干净、更轻，不改变照片本身，只提升发布感。', 'clean', 'xhs', 'clean mood', '轻轻修一下就很好', ['#轻修图', '#干净感', '#氛围感照片'], [], 52)
+        ]
+      };
+      return base[state.imageMood] || base['日常自然'];
+    }
+
+    function makeOutputPlan(name, reason, filter, ratio, coverText, title, tags, stickers, strength, captionBody = '', tone = '') {
+      return {
+        name,
+        reason,
+        filter,
+        ratio,
+        coverText,
+        title,
+        tags,
+        stickers,
+        strength,
+        captionBody,
+        tone,
+        adjustments: planAdjustments(filter),
+        frame: planFrame(filter, ratio)
+      };
+    }
+
+    function planAdjustments(filter) {
+      const presets = {
+        sakura: { brightness: 8, contrast: 4, saturation: 18, temperature: 8, grain: 10, vignette: 8 },
+        dream: { brightness: 10, contrast: -4, saturation: 10, temperature: -2, grain: 18, vignette: 20 },
+        clean: { brightness: 12, contrast: 2, saturation: -8, temperature: -12, grain: 4, vignette: 8 },
+        campus: { brightness: 4, contrast: 8, saturation: 10, temperature: 2, grain: 14, vignette: 12 },
+        ccd: { brightness: 2, contrast: 16, saturation: 12, temperature: 4, grain: 28, vignette: 22 },
+        magazine: { brightness: 6, contrast: 10, saturation: 2, temperature: 4, grain: 8, vignette: 12 },
+        hk: { brightness: -4, contrast: 22, saturation: 16, temperature: 12, grain: 24, vignette: 42 },
+        code: { brightness: -2, contrast: 18, saturation: -4, temperature: -8, grain: 16, vignette: 34 },
+        neon: { brightness: -2, contrast: 20, saturation: 22, temperature: -10, grain: 16, vignette: 36 },
+        badfilm: { brightness: 8, contrast: 8, saturation: -2, temperature: 16, grain: 30, vignette: 24 },
+        sony: { brightness: 4, contrast: 10, saturation: 8, temperature: -3, grain: 4, vignette: 10 },
+        xiaotianKoi: { brightness: 6, contrast: -6, saturation: -18, temperature: 2, grain: 2, vignette: 4 },
+        dailyBright: { brightness: 16, contrast: 4, saturation: -2, temperature: -2, grain: 0, vignette: 0 },
+        watermelonEgg: { brightness: 14, contrast: -4, saturation: 10, temperature: 6, grain: 4, vignette: 3 },
+        koiBlue: { brightness: 10, contrast: 2, saturation: -4, temperature: -14, grain: 2, vignette: 4 }
+      };
+      return { ...(presets[filter] || presets.sony) };
+    }
+
+    function planFrame(filter, ratio) {
+      if (ratio === 'wallpaper') return { enabled: false, padding: 0, radius: 0, color: '#ffffff' };
+      if (filter === 'magazine') return { enabled: true, padding: 72, radius: 0, color: '#f3efe7' };
+      if (filter === 'clean') return { enabled: true, padding: 28, radius: 20, color: '#f8fbff' };
+      if (filter === 'hk' || filter === 'code') return { enabled: true, padding: 16, radius: 12, color: '#101418' };
+      if (filter === 'watermelonEgg') return { enabled: true, padding: 34, radius: 24, color: '#fff5f7' };
+      if (filter === 'koiBlue') return { enabled: true, padding: 28, radius: 18, color: '#edf8fc' };
+      if (filter === 'xiaotianKoi' || filter === 'dailyBright') return { enabled: true, padding: 26, radius: 18, color: '#fffaf3' };
+      return { enabled: true, padding: 26, radius: 18, color: '#f7f0e8' };
+    }
+
+    function applyOutputPlan(plan) {
+      saveHistory('应用出片方案：' + plan.name);
+      state.currentFilter = plan.filter;
+      state.ratio = plan.ratio;
+      state.styleStrength = plan.strength;
+      state.adjustments = { ...plan.adjustments };
+      state.frame = { ...plan.frame };
+      state.stats.templateUsed = true;
+      state.stats.favoriteFilter = plan.filter;
+      state.layers = [];
+      state.layers.push(makeTextLayer(plan.coverText, canvas.width * .12, canvas.height * .76));
+      plan.stickers.forEach((name, i) => {
+        const preset = stickerPresets.find(s => s.name === name) || stickerPresets[0];
+        state.layers.push(makeStickerLayer(preset, canvas.width * (.72 - i * .16), canvas.height * (.18 + i * .14)));
+      });
+      state.selectedLayerId = state.layers[0]?.id || null;
+      state.caption = buildCaptionText(plan);
+      resizeCanvasToRatio();
+      syncUI();
+      document.getElementById('captionBox').value = state.caption;
+      document.getElementById('publishLine').textContent = state.caption.replace(/\n/g, ' · ');
+      requestRender();
+    }
+
+    function buildCaptionText(plan) {
+      return `${plan.title}\n\n${plan.captionBody}\n\n${plan.tags.join(' ')}`;
+    }
+
+    function applyTemplate(key) {
+      const tpl = templateRegistry[key];
+      saveHistory('应用模板：' + tpl.label);
+      state.currentFilter = tpl.filter;
+      state.ratio = tpl.ratio;
+      state.styleStrength = tpl.strength;
+      state.adjustments = { ...tpl.adjustments };
+      state.frame = { ...tpl.frame };
+      state.stats.templateUsed = true;
+      state.stats.favoriteFilter = tpl.filter;
+      state.layers = state.layers.filter(l => l.type === 'baseImage');
+      if (tpl.text) {
+        state.layers.push(makeTextLayer(tpl.text, canvas.width * .12, canvas.height * .78));
+      }
+      tpl.stickers.forEach((name, i) => {
+        const preset = stickerPresets.find(s => s.name === name) || stickerPresets[0];
+        state.layers.push(makeStickerLayer(preset, canvas.width * (.72 - i * .16), canvas.height * (.18 + i * .14)));
+      });
+      state.selectedLayerId = state.layers.length ? state.layers[state.layers.length - 1].id : null;
+      resizeCanvasToRatio();
+      updateCaption(true);
+      syncUI();
+      requestRender();
+    }
+
+    function makeId(prefix) {
+      return prefix + '-' + Math.random().toString(36).slice(2, 9);
+    }
+
+    function makeTextLayer(text, x, y) {
+      return {
+        id: makeId('text'),
+        type: 'text',
+        name: '文字 · ' + text.slice(0, 8),
+        visible: true,
+        x, y,
+        scale: 1,
+        rotation: 0,
+        opacity: 1,
+        blend: 'source-over',
+        text,
+        fontSize: 46,
+        fontFamily: 'round',
+        color: '#ffffff',
+        erased: []
+      };
+    }
+
+    function makeStickerLayer(preset, x, y, matchStyle = true) {
+      const style = matchStyle ? stickerStyleForCurrentFilter(preset) : {};
+      return {
+        id: makeId('sticker'),
+        type: 'sticker',
+        name: '贴纸 · ' + preset.name,
+        visible: true,
+        x, y,
+        scale: 1,
+        rotation: 0,
+        opacity: style.opacity ?? .92,
+        blend: style.blend || (preset.shape === 'scan' ? 'soft-light' : 'source-over'),
+        shape: preset.shape,
+        color: style.color || preset.color,
+        styleLinked: matchStyle,
+        sourceFilter: state.currentFilter,
+        text: preset.text || (preset.name === '标签' ? '# daily vibe' : ''),
+        erased: []
+      };
+    }
+
+    function stickerStyleForCurrentFilter(preset) {
+      const byFilter = {
+        sakura: { color: '#ffd1e6', blend: 'screen', opacity: .88 },
+        dream: { color: '#d9ceff', blend: 'screen', opacity: .84 },
+        clean: { color: '#eef8ff', blend: 'soft-light', opacity: .72 },
+        campus: { color: '#d6f5bd', blend: 'soft-light', opacity: .82 },
+        ccd: { color: preset.shape === 'date' ? '#ffe5d1' : '#f3e4ff', blend: 'screen', opacity: .86 },
+        badfilm: { color: '#f5cf91', blend: 'soft-light', opacity: .84 },
+        hk: { color: '#ffd0a6', blend: 'screen', opacity: .82 },
+        neon: { color: '#8fd3ff', blend: 'screen', opacity: .86 },
+        code: { color: '#6dffbf', blend: 'screen', opacity: .82 },
+        magazine: { color: '#1d1f22', blend: 'source-over', opacity: .9 },
+        sony: { color: '#d9f2ff', blend: 'soft-light', opacity: .78 },
+        glitch: { color: '#ff6ad5', blend: 'screen', opacity: .82 },
+        xiaotianKoi: { color: '#d8cdc1', blend: 'soft-light', opacity: .72 },
+        dailyBright: { color: '#eff9ff', blend: 'screen', opacity: .78 },
+        watermelonEgg: { color: '#ffd6df', blend: 'screen', opacity: .84 },
+        koiBlue: { color: '#bfe4f2', blend: 'screen', opacity: .82 }
+      };
+      return byFilter[state.currentFilter] || {};
+    }
+
+    function addTextLayer() {
+      saveHistory('添加文字');
+      const layer = makeTextLayer('今日份 vibe', canvas.width * .12, canvas.height * .72);
+      state.layers.push(layer);
+      state.selectedLayerId = layer.id;
+      updateCaption(true);
+      syncUI();
+      requestRender();
+    }
+
+    function addStickerLayer(name) {
+      saveHistory('添加贴纸');
+      const preset = name ? stickerPresets.find(s => s.name === name) : pickSuggestedSticker();
+      const layer = makeStickerLayer(preset || stickerPresets[0], canvas.width * .68, canvas.height * .22, true);
+      state.layers.push(layer);
+      state.selectedLayerId = layer.id;
+      syncUI();
+      requestRender();
+    }
+
+    function addCustomStickerLayer() {
+      const text = document.getElementById('customStickerText').value.trim() || '糖水贴纸';
+      const shape = document.getElementById('customStickerShape').value;
+      const color = document.getElementById('customStickerColor').value;
+      saveHistory('添加自定义贴纸');
+      const layer = makeStickerLayer({ name: text.slice(0, 10), shape, color, text }, canvas.width * .5, canvas.height * .5, true);
+      layer.color = color;
+      layer.text = text;
+      state.layers.push(layer);
+      state.selectedLayerId = layer.id;
+      syncUI();
+      requestRender();
+    }
+
+    function pickSuggestedSticker() {
+      const map = {
+        sakura: '心动框',
+        dream: '圆点高光',
+        clean: '圆点高光',
+        campus: '手写箭头',
+        ccd: '胶片日期',
+        badfilm: '胶带',
+        hk: '坐标',
+        neon: '坐标',
+        code: '扫描线',
+        magazine: '胶带',
+        sony: '标签',
+        glitch: '扫描线',
+        xiaotianKoi: '标签',
+        dailyBright: '圆点高光',
+        watermelonEgg: '心动框',
+        koiBlue: '坐标'
+      };
+      return stickerPresets.find(s => s.name === map[state.currentFilter]) || stickerPresets[0];
+    }
+
+    function blindBox() {
+      const templateKeys = Object.keys(templateRegistry);
+      const key = templateKeys[Math.floor(Math.random() * templateKeys.length)];
+      applyTemplate(key);
+      state.stats.lastAction = '盲盒爆改：' + templateRegistry[key].label;
+      updateInsight();
+    }
+
+    function editSelectedLayer() {
+      const layer = selectedLayer();
+      if (!layer) return;
+      if (layer.type === 'text') {
+        layer.text = document.getElementById('layerText').value;
+        layer.name = '文字 · ' + layer.text.slice(0, 8);
+        layer.fontSize = Number(document.getElementById('fontSize').value);
+        layer.fontFamily = document.getElementById('fontFamily').value;
+        layer.color = document.getElementById('layerColor').value;
+      } else if (layer.type === 'sticker') {
+        layer.color = document.getElementById('layerColor').value;
+        layer.text = document.getElementById('layerText').value;
+      }
+      layer.opacity = Number(document.getElementById('opacity').value) / 100;
+      layer.blend = document.getElementById('blendMode').value;
+      document.getElementById('fontSizeValue').textContent = document.getElementById('fontSize').value;
+      document.getElementById('opacityValue').textContent = document.getElementById('opacity').value;
+      setAction('编辑当前图层');
+      renderLayers();
+      requestRender();
+    }
+
+    function selectedLayer() {
+      return state.layers.find(l => l.id === state.selectedLayerId);
+    }
+
+    function resetProject() {
+      saveHistory('重置项目');
+      state.currentFilter = 'none';
+      state.styleStrength = 0;
+      state.adjustments = { brightness: 0, contrast: 0, saturation: 0, temperature: 0, grain: 0, vignette: 0 };
+      state.frame = { enabled: false, padding: 0, radius: 0, color: '#ffffff' };
+      state.layers = [];
+      state.selectedLayerId = null;
+      state.stats.templateUsed = false;
+      state.caption = '';
+      updateCaption(true);
+      syncUI();
+      requestRender();
+    }
+
+    function syncUI() {
+      document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === state.currentFilter));
+      document.querySelectorAll('[data-ratio]').forEach(btn => btn.classList.toggle('active', btn.dataset.ratio === state.ratio));
+      document.getElementById('styleStrength').value = state.styleStrength;
+      document.getElementById('styleStrengthValue').textContent = state.styleStrength;
+      Object.keys(state.adjustments).forEach(key => {
+        const input = document.getElementById(key);
+        const value = document.getElementById(key + 'Value');
+        if (input) input.value = state.adjustments[key];
+        if (value) value.textContent = state.adjustments[key];
+      });
+      document.getElementById('padding').value = state.frame.padding;
+      document.getElementById('paddingValue').textContent = state.frame.padding;
+      document.getElementById('radius').value = state.frame.radius;
+      document.getElementById('radiusValue').textContent = state.frame.radius;
+      document.getElementById('frameColor').value = state.frame.color;
+      document.getElementById('captionBox').value = state.caption;
+      updateLayerEditor();
+      renderLayers();
+      updateReadyCheck();
+      updateInsight();
+      updateRecommendations();
+    }
+
+    function updateLayerEditor() {
+      const layer = selectedLayer();
+      const panel = document.getElementById('layerEditor');
+      panel.classList.toggle('hidden', !layer);
+      if (!layer) return;
+      document.getElementById('layerText').value = layer.text || '';
+      document.getElementById('fontSize').value = layer.fontSize || 46;
+      document.getElementById('fontSizeValue').textContent = layer.fontSize || 46;
+      document.getElementById('opacity').value = Math.round((layer.opacity ?? 1) * 100);
+      document.getElementById('opacityValue').textContent = Math.round((layer.opacity ?? 1) * 100);
+      document.getElementById('layerColor').value = layer.color || '#ffffff';
+      document.getElementById('blendMode').value = layer.blend || 'source-over';
+      document.getElementById('fontFamily').value = layer.fontFamily || 'round';
+    }
+
+    function renderLayers() {
+      const box = document.getElementById('layersList');
+      box.innerHTML = '';
+      const base = [{ id: 'base', type: 'baseImage', name: '原图层', visible: true }, ...state.layers].reverse();
+      base.forEach(layer => {
+        const row = document.createElement('div');
+        row.className = 'layer' + (layer.id === state.selectedLayerId ? ' active' : '');
+        row.innerHTML = `
+          <button class="icon">${layer.visible === false ? '○' : '●'}</button>
+          <div class="layer-name">${layer.name}</div>
+          <div class="layer-actions">
+            <button title="上移">↑</button>
+            <button title="下移">↓</button>
+            <button title="删除">×</button>
+          </div>
+        `;
+        if (layer.id !== 'base') {
+          row.addEventListener('click', () => {
+            state.selectedLayerId = layer.id;
+            syncUI();
+            requestRender();
+          });
+          const [vis, up, down, del] = [row.children[0], ...row.querySelectorAll('.layer-actions button')];
+          vis.addEventListener('click', e => {
+            e.stopPropagation();
+            saveHistory('显示隐藏图层');
+            const target = state.layers.find(l => l.id === layer.id);
+            target.visible = target.visible === false;
+            syncUI();
+            requestRender();
+          });
+          up.addEventListener('click', e => { e.stopPropagation(); moveLayer(layer.id, 1); });
+          down.addEventListener('click', e => { e.stopPropagation(); moveLayer(layer.id, -1); });
+          del.addEventListener('click', e => { e.stopPropagation(); deleteLayer(layer.id); });
+        } else {
+          row.style.cursor = 'default';
+          row.querySelector('.layer-actions').innerHTML = '';
+        }
+        box.appendChild(row);
+      });
+    }
+
+    function moveLayer(id, dir) {
+      const idx = state.layers.findIndex(l => l.id === id);
+      const next = idx + dir;
+      if (idx < 0 || next < 0 || next >= state.layers.length) return;
+      saveHistory('调整图层顺序');
+      const [layer] = state.layers.splice(idx, 1);
+      state.layers.splice(next, 0, layer);
+      syncUI();
+      requestRender();
+    }
+
+    function deleteLayer(id) {
+      saveHistory('删除图层');
+      state.layers = state.layers.filter(l => l.id !== id);
+      if (state.selectedLayerId === id) state.selectedLayerId = state.layers.at(-1)?.id || null;
+      syncUI();
+      requestRender();
+    }
+
+    function requestRender() {
+      if (renderQueued) return;
+      renderQueued = true;
+      requestAnimationFrame(() => {
+        renderQueued = false;
+        render();
+      });
+    }
+
+    function render(options = {}) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground(ctx, canvas.width, canvas.height);
+      if (!state.image) {
+        drawEmpty(ctx);
+        return;
+      }
+      if (state.compare) {
+        drawComposite(ctx, false, { clipRight: state.compareX * canvas.width });
+        drawComposite(ctx, true, { clipLeft: state.compareX * canvas.width });
+        drawCompareLine(ctx);
+      } else {
+        drawComposite(ctx, true);
+      }
+      drawSelection(ctx);
+      if (!options.exporting) updateReadyCheck();
+    }
+
+    function drawBackground(target, w, h) {
+      target.fillStyle = state.frame.enabled ? state.frame.color : '#fffaf3';
+      target.fillRect(0, 0, w, h);
+    }
+
+    function drawEmpty(target) {
+      target.save();
+      const g = target.createLinearGradient(0, 0, canvas.width, canvas.height);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(.48, '#fffdf9');
+      g.addColorStop(.76, '#edf9ff');
+      g.addColorStop(1, '#fff0ef');
+      target.fillStyle = g;
+      target.fillRect(0, 0, canvas.width, canvas.height);
+      target.strokeStyle = 'rgba(184,227,247,.82)';
+      target.setLineDash([8, 8]);
+      target.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
+      target.fillStyle = '#5f554d';
+      target.textAlign = 'center';
+      target.font = '600 24px Arial';
+      target.fillText('点击上传图片', canvas.width / 2, canvas.height / 2 - 10);
+      target.font = '14px Arial';
+      target.fillText('或生成一张测试图体验糖水和鲤鱼', canvas.width / 2, canvas.height / 2 + 24);
+      target.restore();
+    }
+
+    function drawComposite(target, processed, clip = {}) {
+      target.save();
+      if (clip.clipLeft != null || clip.clipRight != null) {
+        const x = clip.clipLeft ?? 0;
+        const w = (clip.clipRight ?? canvas.width) - x;
+        target.beginPath();
+        target.rect(x, 0, w, canvas.height);
+        target.clip();
+      }
+
+      const pad = state.frame.enabled ? state.frame.padding : 0;
+      const area = { x: pad, y: pad, w: canvas.width - pad * 2, h: canvas.height - pad * 2 };
+      roundedClip(target, area.x, area.y, area.w, area.h, state.frame.radius);
+      const imageRect = fitRect(state.image.naturalWidth, state.image.naturalHeight, area.w, area.h);
+      imageRect.x += area.x;
+      imageRect.y += area.y;
+      target.drawImage(state.image, imageRect.x, imageRect.y, imageRect.w, imageRect.h);
+
+      if (processed) {
+        applyAdjustmentsOnCanvas(target, area);
+        applyCurrentFilterOnCanvas(target, area);
+      }
+      target.restore();
+
+      target.save();
+      if (clip.clipLeft != null || clip.clipRight != null) {
+        const x = clip.clipLeft ?? 0;
+        const w = (clip.clipRight ?? canvas.width) - x;
+        target.beginPath();
+        target.rect(x, 0, w, canvas.height);
+        target.clip();
+      }
+      state.layers.forEach(layer => drawLayer(target, layer));
+      target.restore();
+    }
+
+    function roundedClip(target, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      target.beginPath();
+      target.moveTo(x + radius, y);
+      target.lineTo(x + w - radius, y);
+      target.quadraticCurveTo(x + w, y, x + w, y + radius);
+      target.lineTo(x + w, y + h - radius);
+      target.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      target.lineTo(x + radius, y + h);
+      target.quadraticCurveTo(x, y + h, x, y + h - radius);
+      target.lineTo(x, y + radius);
+      target.quadraticCurveTo(x, y, x + radius, y);
+      target.closePath();
+      target.clip();
+    }
+
+    function fitRect(srcW, srcH, maxW, maxH) {
+      const scale = Math.min(maxW / srcW, maxH / srcH);
+      const w = srcW * scale;
+      const h = srcH * scale;
+      return { x: (maxW - w) / 2, y: (maxH - h) / 2, w, h };
+    }
+
+    function applyAdjustmentsOnCanvas(target, area) {
+      const img = target.getImageData(area.x, area.y, area.w, area.h);
+      const d = img.data;
+      const a = state.adjustments;
+      const contrast = (a.contrast + 100) / 100;
+      const sat = (a.saturation + 100) / 100;
+      for (let i = 0; i < d.length; i += 4) {
+        let r = d[i] + a.brightness + a.temperature * .6;
+        let g = d[i + 1] + a.brightness;
+        let b = d[i + 2] + a.brightness - a.temperature * .6;
+        r = ((r - 128) * contrast) + 128;
+        g = ((g - 128) * contrast) + 128;
+        b = ((b - 128) * contrast) + 128;
+        const gray = r * .299 + g * .587 + b * .114;
+        d[i] = clamp(gray + (r - gray) * sat);
+        d[i + 1] = clamp(gray + (g - gray) * sat);
+        d[i + 2] = clamp(gray + (b - gray) * sat);
+      }
+      target.putImageData(img, area.x, area.y);
+      if (a.vignette) drawVignette(target, area, a.vignette / 80);
+      if (a.grain) drawGrain(target, area, a.grain / 80);
+    }
+
+    function applyCurrentFilterOnCanvas(target, area) {
+      const fn = filterRegistry[state.currentFilter]?.apply || filterRegistry.none.apply;
+      const img = target.getImageData(area.x, area.y, area.w, area.h);
+      const out = fn(img, state.styleStrength / 100, area);
+      target.putImageData(out, area.x, area.y);
+      drawFilterOverlays(target, area, state.currentFilter, state.styleStrength / 100);
+    }
+
+    function mixImageData(original, effect, amount) {
+      const out = new ImageData(new Uint8ClampedArray(original.data), original.width, original.height);
+      for (let i = 0; i < out.data.length; i += 4) {
+        out.data[i] = clamp(original.data[i] * (1 - amount) + effect.data[i] * amount);
+        out.data[i + 1] = clamp(original.data[i + 1] * (1 - amount) + effect.data[i + 1] * amount);
+        out.data[i + 2] = clamp(original.data[i + 2] * (1 - amount) + effect.data[i + 2] * amount);
+      }
+      return out;
+    }
+
+    function applyGlitch(img, amount) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const src = img.data;
+      const d = out.data;
+      const shift = Math.round(3 + amount * 14);
+      for (let y = 0; y < img.height; y++) {
+        const tear = (y % Math.max(9, Math.round(28 - amount * 18)) === 0) ? Math.round((Math.random() - .5) * amount * 40) : 0;
+        for (let x = 0; x < img.width; x++) {
+          const i = (y * img.width + x) * 4;
+          const rx = clampIndex(x - shift + tear, img.width);
+          const bx = clampIndex(x + shift + tear, img.width);
+          d[i] = src[(y * img.width + rx) * 4];
+          d[i + 2] = src[(y * img.width + bx) * 4 + 2];
+          if (amount > .35 && y % 11 === 0) {
+            d[i] = clamp(d[i] + 50 * amount);
+            d[i + 1] = clamp(d[i + 1] + 20 * amount);
+          }
+        }
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applyBadFilm(img, amount) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = clamp(d[i] * (1 + .15 * amount) + 18 * amount);
+        d[i + 1] = clamp(d[i + 1] * (1 + .04 * amount) + 10 * amount);
+        d[i + 2] = clamp(d[i + 2] * (1 - .12 * amount));
+        if (Math.random() < .018 * amount) {
+          const n = Math.random() * 120 * amount;
+          d[i] = clamp(d[i] + n);
+          d[i + 1] = clamp(d[i + 1] + n);
+        }
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applyCCD(img, amount) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const n = (Math.random() - .5) * 80 * amount;
+        d[i] = clamp(d[i] + n + 12 * amount);
+        d[i + 1] = clamp(d[i + 1] + n * .55);
+        d[i + 2] = clamp(d[i + 2] + n + 22 * amount);
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applySony(img, amount) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = clamp(d[i] * (1 + .05 * amount));
+        d[i + 1] = clamp(d[i + 1] * (1 + .12 * amount));
+        d[i + 2] = clamp(d[i + 2] * (1 + .1 * amount));
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applySakura(img, amount) {
+      return tint(img, amount, [255, 190, 222], .22, 1.12);
+    }
+
+    function applyCampus(img, amount) {
+      return tint(img, amount, [150, 220, 155], .14, .98);
+    }
+
+    function applyCodeDream(img, amount) {
+      return tint(img, amount, [80, 255, 190], .24, .82);
+    }
+
+    function applyNeon(img, amount) {
+      return tint(img, amount, [40, 180, 255], .24, 1.18);
+    }
+
+    function applyHongKong(img, amount) {
+      return tint(img, amount, [255, 126, 72], .2, 1.16);
+    }
+
+    function applyClean(img, amount) {
+      return tint(img, amount, [214, 238, 255], .16, 1.08, -10);
+    }
+
+    function applyMagazine(img, amount) {
+      return tint(img, amount, [238, 225, 196], .16, 1.06);
+    }
+
+    function applyDream(img, amount) {
+      return tint(img, amount, [190, 180, 255], .22, 1.04);
+    }
+
+    function applyXiaotianKoi(img, amount) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114;
+        d[i] = clamp(gray + (d[i] - gray) * (1 - .38 * amount) + 10 * amount);
+        d[i + 1] = clamp(gray + (d[i + 1] - gray) * (1 - .38 * amount) + 8 * amount);
+        d[i + 2] = clamp(gray + (d[i + 2] - gray) * (1 - .38 * amount) + 4 * amount);
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applyDailyBright(img, amount) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const lift = 28 * amount;
+        d[i] = clamp(d[i] + lift + (255 - d[i]) * .08 * amount);
+        d[i + 1] = clamp(d[i + 1] + lift + (255 - d[i + 1]) * .1 * amount);
+        d[i + 2] = clamp(d[i + 2] + lift + (255 - d[i + 2]) * .12 * amount);
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applyWatermelonEgg(img, amount) {
+      const out = tint(img, amount, [255, 218, 228], .24, .98, 8);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = clamp(d[i] + 10 * amount);
+        d[i + 1] = clamp(d[i + 1] + 6 * amount);
+        d[i + 2] = clamp(d[i + 2] + 9 * amount);
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function applyKoiBlue(img, amount) {
+      const out = tint(img, amount, [190, 228, 242], .2, 1.02, 4);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = clamp(d[i] - 8 * amount);
+        d[i + 1] = clamp(d[i + 1] + 5 * amount);
+        d[i + 2] = clamp(d[i + 2] + 16 * amount);
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function tint(img, amount, rgb, mix, contrastBoost, extra = 0) {
+      const out = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+      const d = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = clamp(((d[i] - 128) * contrastBoost + 128) * (1 - mix * amount) + rgb[0] * mix * amount + extra * amount);
+        d[i + 1] = clamp(((d[i + 1] - 128) * contrastBoost + 128) * (1 - mix * amount) + rgb[1] * mix * amount + extra * amount);
+        d[i + 2] = clamp(((d[i + 2] - 128) * contrastBoost + 128) * (1 - mix * amount) + rgb[2] * mix * amount + extra * amount);
+      }
+      return mixImageData(img, out, amount);
+    }
+
+    function drawFilterOverlays(target, area, filter, amount) {
+      target.save();
+      target.globalAlpha = amount;
+      if (filter === 'sakura' || filter === 'dream') {
+        target.fillStyle = filter === 'sakura' ? '#ffd6e8' : '#e2d8ff';
+        for (let i = 0; i < 18; i++) {
+          target.beginPath();
+          target.arc(area.x + pseudo(i, 1) * area.w, area.y + pseudo(i, 2) * area.h, 4 + pseudo(i, 3) * 10, 0, Math.PI * 2);
+          target.fill();
+        }
+      }
+      if (filter === 'campus' || filter === 'ccd' || filter === 'glitch') {
+        target.strokeStyle = 'rgba(255,255,255,.28)';
+        target.lineWidth = 1;
+        for (let y = area.y; y < area.y + area.h; y += filter === 'campus' ? 18 : 9) {
+          target.beginPath();
+          target.moveTo(area.x, y);
+          target.lineTo(area.x + area.w, y);
+          target.stroke();
+        }
+      }
+      if (filter === 'hk' || filter === 'badfilm') {
+        const g = target.createRadialGradient(area.x, area.y, 20, area.x, area.y, area.w * .8);
+        g.addColorStop(0, 'rgba(255,118,60,.55)');
+        g.addColorStop(1, 'rgba(255,118,60,0)');
+        target.fillStyle = g;
+        target.fillRect(area.x, area.y, area.w, area.h);
+      }
+      if (filter === 'code') {
+        target.fillStyle = 'rgba(91,255,187,.42)';
+        target.font = '13px Consolas, monospace';
+        for (let y = area.y + 24; y < area.y + area.h; y += 42) {
+          target.fillText('dream.render("//vibe")', area.x + 22 + (y % 90), y);
+        }
+      }
+      if (filter === 'magazine') {
+        target.fillStyle = 'rgba(20,20,20,.75)';
+        target.font = '700 18px Arial';
+        target.fillText('SUGAR / KOI', area.x + 24, area.y + 36);
+        target.fillRect(area.x + 24, area.y + 46, 90, 3);
+      }
+      target.restore();
+    }
+
+    function drawLayer(target, layer) {
+      if (!layer.visible) return;
+      target.save();
+      target.globalAlpha = layer.opacity ?? 1;
+      target.globalCompositeOperation = layer.blend || 'source-over';
+      target.translate(layer.x, layer.y);
+      target.rotate(layer.rotation || 0);
+      target.scale(layer.scale || 1, layer.scale || 1);
+      if (layer.type === 'text') drawTextLayer(target, layer);
+      if (layer.type === 'sticker') drawStickerLayer(target, layer);
+      if (layer.erased?.length) {
+        target.globalCompositeOperation = 'destination-out';
+        layer.erased.forEach(p => {
+          target.beginPath();
+          target.arc(p.x - layer.x, p.y - layer.y, p.r, 0, Math.PI * 2);
+          target.fill();
+        });
+      }
+      target.restore();
+    }
+
+    function drawTextLayer(target, layer) {
+      target.fillStyle = layer.color || '#fff';
+      target.textBaseline = 'top';
+      const family = fontPresets[layer.fontFamily] || fontPresets.round;
+      const weight = layer.fontFamily === 'clean' ? 500 : 800;
+      target.font = `${weight} ${layer.fontSize || 46}px ${family}`;
+      target.shadowColor = 'rgba(0,0,0,.28)';
+      target.shadowBlur = 14;
+      const lines = String(layer.text || '').split('\n');
+      lines.forEach((line, i) => target.fillText(line, 0, i * (layer.fontSize || 46) * 1.14));
+    }
+
+    function drawStickerLayer(target, layer) {
+      target.fillStyle = layer.color || '#fff';
+      target.strokeStyle = layer.color || '#fff';
+      target.lineWidth = 3;
+      if (layer.shape === 'star') {
+        drawStar(target, 0, 0, 5, 34, 15);
+        target.fill();
+      } else if (layer.shape === 'date') {
+        target.font = '700 22px Courier New, monospace';
+        target.fillText(new Date().toISOString().slice(0, 10), 0, 0);
+      } else if (layer.shape === 'scan') {
+        target.globalAlpha *= .42;
+        for (let y = 0; y < 260; y += 14) {
+          target.beginPath();
+          target.moveTo(-140, y);
+          target.lineTo(220, y);
+          target.stroke();
+        }
+      } else if (layer.shape === 'arrow') {
+        target.lineCap = 'round';
+        target.lineJoin = 'round';
+        target.beginPath();
+        target.moveTo(0, 20);
+        target.bezierCurveTo(38, -8, 76, 4, 118, -24);
+        target.stroke();
+        target.beginPath();
+        target.moveTo(118, -24);
+        target.lineTo(101, -22);
+        target.moveTo(118, -24);
+        target.lineTo(109, -8);
+        target.stroke();
+        target.font = '700 18px Arial';
+        target.fillText('look', 6, 48);
+      } else if (layer.shape === 'tape') {
+        target.save();
+        target.globalAlpha *= .86;
+        target.rotate(-0.08);
+        target.fillStyle = layer.color || '#f4d7a1';
+        target.fillRect(0, 0, 146, 34);
+        target.fillStyle = 'rgba(255,255,255,.28)';
+        for (let x = 8; x < 140; x += 18) target.fillRect(x, 0, 8, 34);
+        target.fillStyle = '#7b4c42';
+        target.font = '700 16px "Microsoft YaHei", Arial';
+        target.fillText(layer.text || 'tape note', 16, 23);
+        target.restore();
+      } else if (layer.shape === 'coord') {
+        target.font = '700 16px Courier New, monospace';
+        target.fillText(layer.text || 'N 31.2304  E 121.4737', 0, 0);
+        target.beginPath();
+        target.moveTo(0, 12);
+        target.lineTo(196, 12);
+        target.stroke();
+      } else if (layer.shape === 'heartFrame') {
+        target.strokeStyle = layer.color || '#ffb4d8';
+        target.lineWidth = 4;
+        roundRect(target, 0, 0, 168, 112, 24);
+        target.stroke();
+        target.font = '700 22px Arial';
+        target.fillText('♡', 18, 34);
+        target.fillText(layer.text || 'vibe', 58, 36);
+      } else if (layer.shape === 'sparkDots') {
+        target.fillStyle = layer.color || '#fff';
+        for (let i = 0; i < 18; i++) {
+          const x = pseudo(i, 7) * 160;
+          const y = pseudo(i, 8) * 94;
+          target.beginPath();
+          target.arc(x, y, 2 + pseudo(i, 9) * 4, 0, Math.PI * 2);
+          target.fill();
+        }
+      } else {
+        target.fillStyle = '#f7f0e8';
+        roundRect(target, 0, 0, 170, 42, 21);
+        target.fill();
+        target.fillStyle = '#151719';
+        target.font = '700 18px Arial';
+        target.fillText(layer.text || '# daily vibe', 18, 27);
+      }
+    }
+
+    function drawStar(target, cx, cy, spikes, outerRadius, innerRadius) {
+      let rot = Math.PI / 2 * 3;
+      let x = cx;
+      let y = cy;
+      const step = Math.PI / spikes;
+      target.beginPath();
+      target.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        target.lineTo(x, y);
+        rot += step;
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        target.lineTo(x, y);
+        rot += step;
+      }
+      target.lineTo(cx, cy - outerRadius);
+      target.closePath();
+    }
+
+    function roundRect(target, x, y, w, h, r) {
+      target.beginPath();
+      target.roundRect ? target.roundRect(x, y, w, h, r) : target.rect(x, y, w, h);
+    }
+
+    function drawVignette(target, area, amount) {
+      const g = target.createRadialGradient(
+        area.x + area.w / 2, area.y + area.h / 2, area.w * .18,
+        area.x + area.w / 2, area.y + area.h / 2, area.w * .68
+      );
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, `rgba(0,0,0,${.68 * amount})`);
+      target.fillStyle = g;
+      target.fillRect(area.x, area.y, area.w, area.h);
+    }
+
+    function drawGrain(target, area, amount) {
+      const count = Math.round(area.w * area.h * .006 * amount);
+      target.save();
+      target.globalAlpha = .18 * amount;
+      for (let i = 0; i < count; i++) {
+        const v = Math.random() > .5 ? 255 : 0;
+        target.fillStyle = `rgb(${v},${v},${v})`;
+        target.fillRect(area.x + Math.random() * area.w, area.y + Math.random() * area.h, 1, 1);
+      }
+      target.restore();
+    }
+
+    function drawCompareLine(target) {
+      const x = state.compareX * canvas.width;
+      target.save();
+      target.strokeStyle = '#ffffff';
+      target.lineWidth = 2;
+      target.beginPath();
+      target.moveTo(x, 0);
+      target.lineTo(x, canvas.height);
+      target.stroke();
+      target.fillStyle = '#ffffff';
+      target.beginPath();
+      target.arc(x, canvas.height / 2, 15, 0, Math.PI * 2);
+      target.fill();
+      target.fillStyle = '#111';
+      target.font = '12px Arial';
+      target.textAlign = 'center';
+      target.fillText('↔', x, canvas.height / 2 + 4);
+      target.restore();
+    }
+
+    function drawSelection(target) {
+      const layer = selectedLayer();
+      if (!layer || state.compare) return;
+      const box = getLayerBox(layer);
+      if (!box) return;
+      target.save();
+      target.strokeStyle = '#8fd3ff';
+      target.lineWidth = 1.5;
+      target.setLineDash([6, 5]);
+      target.strokeRect(box.x, box.y, box.w, box.h);
+      target.fillStyle = '#8fd3ff';
+      target.fillRect(box.x + box.w - 6, box.y + box.h - 6, 12, 12);
+      target.restore();
+    }
+
+    function getLayerBox(layer) {
+      if (layer.type === 'text') {
+        const size = layer.fontSize || 46;
+        const text = layer.text || '';
+        const scale = layer.scale || 1;
+        const w = Math.max(140, text.length * size * .64) * scale;
+        const h = Math.max(64, size * 1.45) * scale;
+        return { x: layer.x - 42, y: layer.y - 34, w: w + 84, h: h + 68 };
+      }
+      if (layer.type === 'sticker') {
+        const scale = layer.scale || 1;
+        return { x: layer.x - 58, y: layer.y - 72, w: 286 * scale, h: 188 * scale };
+      }
+      return null;
+    }
+
+    function onPointerDown(e) {
+      const p = canvasPoint(e);
+      canvas.setPointerCapture?.(e.pointerId);
+      if (state.compare) {
+        drag = { type: 'compare' };
+        state.compareX = p.x / canvas.width;
+        requestRender();
+        return;
+      }
+      if (state.tool === 'erase') {
+        const layer = selectedLayer();
+        if (layer && layer.type !== 'baseImage') {
+          saveHistory('擦除当前图层');
+          drag = { type: 'erase', layer };
+          eraseAt(layer, p);
+        }
+        return;
+      }
+      const hit = hitTest(p);
+      if (hit) {
+        state.selectedLayerId = hit.id;
+        drag = { type: 'move', id: hit.id, start: p, x: hit.x, y: hit.y, moved: false, before: cloneState() };
+        syncUI();
+        requestRender();
+      } else if (state.selectedLayerId) {
+        state.selectedLayerId = null;
+        syncUI();
+        requestRender();
+      }
+    }
+
+    function onPointerMove(e) {
+      if (!drag) return;
+      e.preventDefault();
+      const p = canvasPoint(e);
+      if (drag.type === 'compare') {
+        state.compareX = Math.max(.05, Math.min(.95, p.x / canvas.width));
+        requestRender();
+      }
+      if (drag.type === 'move') {
+        const layer = state.layers.find(l => l.id === drag.id);
+        if (!layer) return;
+        layer.x = clampRange(drag.x + (p.x - drag.start.x), -canvas.width, canvas.width * 2);
+        layer.y = clampRange(drag.y + (p.y - drag.start.y), -canvas.height, canvas.height * 2);
+        drag.moved = true;
+        requestRender();
+      }
+      if (drag.type === 'erase') {
+        eraseAt(drag.layer, p);
+      }
+    }
+
+    function onPointerUp(e) {
+      if (drag?.type === 'compare') setAction('调整对比线');
+      if (drag?.type === 'move' && drag.moved) {
+        state.stats.actions += 1;
+        state.stats.lastAction = '移动图层';
+        historyPast.push(drag.before);
+        if (historyPast.length > 60) historyPast.shift();
+        historyFuture = [];
+        updateReadyCheck();
+        updateInsight();
+      }
+      if (drag && e?.pointerId != null) canvas.releasePointerCapture?.(e.pointerId);
+      drag = null;
+    }
+
+    function canvasPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * canvas.width / rect.width,
+        y: (e.clientY - rect.top) * canvas.height / rect.height
+      };
+    }
+
+    function hitTest(p) {
+      for (let i = state.layers.length - 1; i >= 0; i--) {
+        const layer = state.layers[i];
+        if (!layer.visible) continue;
+        const box = getLayerBox(layer);
+        if (box && p.x >= box.x && p.x <= box.x + box.w && p.y >= box.y && p.y <= box.y + box.h) return layer;
+      }
+      return null;
+    }
+
+    function eraseAt(layer, p) {
+      layer.erased = layer.erased || [];
+      layer.erased.push({ x: p.x, y: p.y, r: 18 });
+      requestRender();
+    }
+
+    function updateCaption(force) {
+      if (!force && state.caption) return;
+      if (state.image) {
+        const plans = buildOutputPlans();
+        const matched = plans.find(plan => plan.filter === state.currentFilter) || plans[0];
+        if (matched) {
+          const plan = {
+            ...matched,
+            ratio: state.ratio,
+            tags: tuneTags({ ...matched, tags: matched.tags }, state.imageFeatures || {})
+          };
+          state.caption = buildCaptionText(plan);
+          document.getElementById('captionBox').value = state.caption;
+          document.getElementById('publishLine').textContent = state.caption.replace(/\n/g, ' · ');
+          return;
+        }
+      }
+      const filter = filterRegistry[state.currentFilter]?.label || '自然风格';
+      const ratio = publishRatios[state.ratio].label;
+      const mood = state.imageMood === '未分析' ? '日常照片' : state.imageMood;
+      const titleMap = {
+        sakura: '天生一点可爱',
+        code: '生命力是不顺从',
+        hk: '风吹不走的那一点',
+        ccd: '幸福的敲门声',
+        clean: '白纸一样的清透感',
+        magazine: '今天也有今天的起伏',
+        dream: '风和蝴蝶都很轻',
+        xiaotianKoi: '一张很有平仄的日常',
+        dailyBright: '今天的太阳更大一点',
+        watermelonEgg: '幸福敲门的粉白时刻',
+        koiBlue: '浅蓝色里有一只蝴蝶'
+      };
+      const title = titleMap[state.currentFilter] || `${filter}出片记录`;
+      const tags = ['#糖水和鲤鱼', '#氛围感照片', '#' + filter.replace('风', ''), '#' + ratio.split(' ')[1], '#' + mood];
+      state.caption = `${title}\n${tags.join(' ')}`;
+      document.getElementById('captionBox').value = state.caption;
+      document.getElementById('publishLine').textContent = state.caption.replace(/\n/g, ' · ');
+    }
+
+    function copyCaption() {
+      state.caption = document.getElementById('captionBox').value;
+      navigator.clipboard?.writeText(state.caption);
+      setAction('复制发布文案');
+    }
+
+    function updateReadyCheck() {
+      let score = 0;
+      if (state.image) score += 25;
+      if (state.currentFilter !== 'none' && state.styleStrength > 0) score += 18;
+      if (state.stats.templateUsed) score += 14;
+      if (state.layers.some(l => l.type === 'text')) score += 12;
+      if (state.layers.some(l => l.type === 'sticker')) score += 8;
+      if (state.frame.enabled || state.frame.padding > 0) score += 8;
+      if (state.ratio) score += 8;
+      if (state.caption) score += 7;
+      score = Math.min(100, score);
+      document.getElementById('readyScore').textContent = score;
+      document.getElementById('readyLabel').textContent = score + '%';
+      document.getElementById('readyMeter').style.width = score + '%';
+      let tip = '先上传图片，工作台就醒了。';
+      if (state.image && score < 55) tip = '选一个模板，出片速度会快很多。';
+      if (score >= 55 && !state.layers.some(l => l.type === 'text')) tip = '加一句标题会更像封面。';
+      if (score >= 75) tip = '当前比例适合发布，可以导出试试。';
+      if (score >= 92) tip = '完成度很高，这张可以直接发。';
+      document.getElementById('readyTip').textContent = tip;
+    }
+
+    function updateInsight() {
+      const filter = filterRegistry[state.stats.favoriteFilter]?.label || '无';
+      document.getElementById('insightBox').innerHTML = `
+        操作次数：${state.stats.actions}<br>
+        导出次数：${state.stats.exports}<br>
+        偏好风格：${filter}<br>
+        图片气质：${state.imageMood}<br>
+        最近动作：${state.stats.lastAction}
+      `;
+    }
+
+    function exportImage(type) {
+      if (!state.image) return;
+      state.stats.exports += 1;
+      state.stats.lastAction = type === 'image/png' ? '导出 PNG' : '导出 JPG';
+      const url = canvas.toDataURL(type, .92);
+      const a = document.createElement('a');
+      const ext = type === 'image/png' ? 'png' : 'jpg';
+      a.href = url;
+      a.download = `tangshui-koi-${Date.now()}.${ext}`;
+      a.click();
+      updateReadyCheck();
+      updateInsight();
+    }
+
+    function undo() {
+      if (!historyPast.length) return;
+      historyFuture.push(cloneState());
+      restoreState(historyPast.pop());
+    }
+
+    function redo() {
+      if (!historyFuture.length) return;
+      historyPast.push(cloneState());
+      restoreState(historyFuture.pop());
+    }
+
+    function clamp(v) {
+      return Math.max(0, Math.min(255, v));
+    }
+
+    function clampRange(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function clampIndex(v, max) {
+      return Math.max(0, Math.min(max - 1, v));
+    }
+
+    function pseudo(i, salt) {
+      const x = Math.sin(i * 999 + salt * 37) * 10000;
+      return x - Math.floor(x);
+    }
+
+    setupUI();
+  </script>
+</body>
+</html>
